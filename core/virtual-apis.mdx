@@ -1,0 +1,106 @@
+---
+title: Virtual APIs
+description: The foundation of DataHarbor. Publish governed, purpose-limited data products from a single source of truth.
+---
+
+# Virtual APIs
+
+**One source of truth. Many governed views.**
+
+A Virtual API is a governed view of an existing dataset. Instead of cloning data or building custom pipelines for each consumer, you define declarative recipes that apply redaction, tokenization, and transformations automatically.
+
+## How it works
+
+1. **Enroll** your data source (REST API today, data lakes coming soon)
+2. **Define** Control Blocks: privacy rules, transformations, access controls
+3. **Publish** — your Virtual API is instantly available
+4. **Monitor** — observe usage and schema changes over time
+
+## Basic configuration
+
+```yaml
+virtual_api:
+  name: partner-view
+  description: Customer data for Partner X with PII redacted
+  source: customer-api
+  endpoint: /customers
+
+  controls:
+    - type: redact
+      fields:
+        - ssn
+        - date_of_birth
+
+    - type: tokenize
+      fields:
+        - email
+
+  access:
+    expires: 2025-12-31
+```
+
+## Multiple Virtual APIs from one source
+
+One enrolled API can power many governed views:
+
+```yaml
+# Partner View — redacted identifiers
+virtual_api:
+  name: partner-view
+  source: customer-api
+  controls:
+    - type: redact
+      fields: [ssn, date_of_birth, email]
+
+---
+# Analytics View — tokenized for correlation
+virtual_api:
+  name: analytics-view
+  source: customer-api
+  controls:
+    - type: tokenize
+      fields: [email, phone]
+    - type: redact
+      fields: [ssn]
+
+---
+# AI View — anonymized for model training
+virtual_api:
+  name: ai-training-view
+  source: customer-api
+  controls:
+    - type: anonymize
+      fields: [email, phone, name]
+    - type: redact
+      fields: [ssn, date_of_birth]
+```
+
+No duplicated data. No cloned APIs.
+
+## Versioning
+
+Every change to a Virtual API creates a new version. You can:
+- View the full version history
+- Compare configurations between versions
+- Roll back to a previous version
+- Audit which version was active at any point in time
+
+## Lifecycle
+
+| State | Description |
+|-------|-------------|
+| **Draft** | Configuration in progress, not yet published |
+| **Active** | Live and accepting requests |
+| **Expired** | Past expiration date, no longer accepting requests |
+| **Revoked** | Manually disabled, instant shutdown |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Data Control" icon="shield" href="/control-blocks/data-control">
+    Redaction, tokenization, anonymization
+  </Card>
+  <Card title="Access Control" icon="lock" href="/control-blocks/access-control">
+    Geo restrictions, expiration, revocation
+  </Card>
+</CardGroup>

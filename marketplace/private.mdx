@@ -1,0 +1,157 @@
+---
+title: Private Marketplace
+description: An internal data catalog for your organization.
+---
+
+<Info>
+  Private Marketplace is **coming soon**. This page describes planned functionality.
+</Info>
+
+# Private Marketplace
+
+**Find data. Not tickets.**
+
+An internal data catalog for your organization. Teams discover governed data products without filing tickets.
+
+## How it works
+
+1. **Publish** Virtual APIs to your private catalog
+2. **Teams browse** and discover available data
+3. **Request access** with self-service workflows
+4. **Data owners approve** (or auto-approve)
+5. **Consume** governed data immediately
+
+```yaml
+virtual_api:
+  name: customer-analytics
+  source: customer-api
+
+  controls:
+    - type: tokenize
+      fields: [email, phone]
+    - type: redact
+      fields: [ssn]
+
+  marketplace:
+    visibility: internal
+    
+    catalog:
+      team: Data Platform
+      tags: [customers, analytics, tokenized]
+      description: "Customer data for analytics. PII tokenized."
+    
+    access:
+      approval: team_lead
+      auto_approve_for:
+        - team: Analytics
+        - team: Data Science
+```
+
+## Internal discovery
+
+Teams see a catalog of available data products:
+
+| Virtual API | Owner | Tags | Access |
+|-------------|-------|------|--------|
+| customer-analytics | Data Platform | customers, tokenized | Request |
+| order-history | Commerce | orders, sales | Auto-approved |
+| product-catalog | Catalog Team | products, inventory | Open |
+
+## Self-service access
+
+No more "can you send me that data?" tickets:
+
+```json
+{
+  "request": "access_request",
+  "virtual_api": "customer-analytics",
+  "requester": "alice@yourcompany.com",
+  "team": "Marketing Analytics",
+  "use_case": "Customer segmentation analysis",
+  "status": "pending",
+  "approver": "data-platform-leads@yourcompany.com"
+}
+```
+
+## Approval workflows
+
+### Manual approval
+
+Data owner reviews each request:
+
+```yaml
+access:
+  approval: manual
+  approvers:
+    - data-platform-leads@yourcompany.com
+```
+
+### Team-based auto-approval
+
+Trusted teams get instant access:
+
+```yaml
+access:
+  auto_approve_for:
+    - team: Analytics
+    - team: Data Science
+    - team: Finance
+```
+
+### Role-based access
+
+Map to your identity provider:
+
+```yaml
+access:
+  auto_approve_if:
+    role: data_analyst
+```
+
+## Use cases
+
+| Use case | Description |
+|----------|-------------|
+| **Analytics self-service** | Data scientists query without waiting on engineering |
+| **Cross-team data sharing** | Redacted and tokenized, no custom pipelines |
+| **New hire onboarding** | Discover available data from day one |
+| **Data owner visibility** | Approve access, monitor usage, maintain control |
+
+## End clone-and-scrub
+
+Before Private Marketplace:
+1. Analyst asks engineer for data
+2. Engineer exports, scrubs PII manually
+3. Analyst gets stale, one-time snapshot
+4. Repeat for every request
+
+With Private Marketplace:
+1. Analyst browses catalog
+2. Requests access (auto-approved)
+3. Gets live, governed data
+4. Self-service forever
+
+## Leak prevention
+
+Schema monitoring catches PII exposure before it happens:
+
+```json
+{
+  "alert": "internal_access_risk",
+  "virtual_api": "customer-analytics",
+  "issue": "New field 'backup_email' not covered by tokenization",
+  "detected_at": "2025-01-15T10:30:00Z",
+  "action_required": "Review and apply control"
+}
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Global Marketplace" icon="globe" href="/marketplace/global">
+    External data monetization
+  </Card>
+  <Card title="Schema Analytics" icon="chart-line" href="/protect/schema-analytics">
+    Monitor data coverage
+  </Card>
+</CardGroup>

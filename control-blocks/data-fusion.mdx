@@ -1,0 +1,51 @@
+---
+title: Data Fusion
+description: Combine multiple data sources into a single governed endpoint.
+sidebarTitle: Data Fusion
+icon: merge
+tag: Coming Soon
+---
+
+<Note>
+  Data Fusion is **coming soon**. We'd love to hear about your use case — [get in touch](mailto:hello@dataharbor.co?subject=Interest%20in%20Data%20Fusion).
+</Note>
+
+# Data Fusion
+
+**Combine, don't duplicate.**
+
+Join APIs with data lakes into unified, governed Virtual APIs. No new infrastructure required.
+
+## Fuse
+
+Reference another Virtual API and combine data into a unified meta response. Each source maintains its own governance rules while contributing to a composite view — no data duplication, no pipeline orchestration.
+
+```yaml
+objects:
+  enriched_customers:
+    fuse:
+      - source: crm-api
+        object: customers
+      - source: analytics-lake
+        object: customer_metrics
+    joinOn: customer_id
+```
+
+## Use cases
+
+| Scenario | Sources |
+|----------|---------|
+| Customer 360 view | CRM API + analytics data lake + support tickets |
+| Enriched transactions | Payment API + fraud signals + merchant data |
+| Unified inventory | ERP system + warehouse API + supplier feeds |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Data Control" icon="shield" href="/control-blocks/data-control">
+    Field-level privacy controls
+  </Card>
+  <Card title="Data Transform" icon="shuffle" href="/control-blocks/data-transform">
+    Combine and transform fields
+  </Card>
+</CardGroup>

@@ -1,0 +1,159 @@
+---
+title: Global Marketplace
+description: Monetize and share governed data with partners and buyers.
+---
+
+<Info>
+  Global Marketplace is **coming soon**. This page describes planned functionality.
+</Info>
+
+# Global Marketplace
+
+**Monetize your data. Keep your control.**
+
+Monetize and share governed data with partners, buyers, and the broader ecosystem. Discovery, access control, and billing — all in one platform.
+
+## How it works
+
+1. **List** your Virtual API on the marketplace
+2. **Configure** pricing and access terms
+3. **Approve** or auto-approve access requests
+4. **Monitor** usage and revenue
+5. **Revoke** access anytime
+
+```yaml
+virtual_api:
+  name: property-valuations
+  source: valuation-api
+
+  controls:
+    - type: tokenize
+      fields: [owner_name, owner_email]
+
+  marketplace:
+    listed: true
+    visibility: public
+    
+    pricing:
+      model: per_request
+      price: 0.02  # $0.02 per request
+    
+    terms:
+      requires_approval: true
+      allowed_use_cases:
+        - analytics
+        - research
+      prohibited_use_cases:
+        - resale
+        - marketing
+```
+
+## Pricing models
+
+### Per-request
+
+Charge per API call:
+
+```yaml
+pricing:
+  model: per_request
+  price: 0.02
+```
+
+### Subscription
+
+Monthly access fee:
+
+```yaml
+pricing:
+  model: subscription
+  price: 500  # $500/month
+  rate_limit: 100000/month
+```
+
+### Free
+
+Open access with governance:
+
+```yaml
+pricing:
+  model: free
+  rate_limit: 1000/day
+```
+
+## Discovery
+
+Buyers browse the marketplace and see:
+
+- **Description**: What data is available
+- **Schema preview**: Field names and types (not values)
+- **Pricing**: Cost structure
+- **Terms**: Allowed and prohibited use cases
+- **Governance**: What controls are applied
+
+```json
+{
+  "listing": "property-valuations",
+  "provider": "Acme Data Co",
+  "description": "Residential property valuations for US markets",
+  "fields": ["property_id", "address", "valuation", "valuation_date"],
+  "controls_applied": ["owner PII tokenized"],
+  "pricing": "$0.02/request",
+  "rating": 4.8,
+  "total_consumers": 47
+}
+```
+
+## Access requests
+
+Buyers request access; you approve:
+
+```json
+{
+  "request_id": "req_123",
+  "listing": "property-valuations",
+  "requester": "Analytics Corp",
+  "use_case": "Real estate market research",
+  "requested_at": "2025-01-15T10:00:00Z",
+  "status": "pending_approval"
+}
+```
+
+Or enable auto-approval:
+
+```yaml
+marketplace:
+  requires_approval: false
+  auto_approve_if:
+    - use_case_in: [analytics, research]
+    - company_verified: true
+```
+
+## Use cases
+
+| Use case | Description |
+|----------|-------------|
+| **Data monetization** | Turn datasets into revenue streams |
+| **Partner data exchange** | Share tokenized data without losing control |
+| **AI-ready endpoints** | List MCP-enabled Virtual APIs for AI developers |
+| **Industry data networks** | Participate in vertical-specific exchanges |
+
+## Governance travels with data
+
+Every marketplace consumer is bound by your Virtual API's controls:
+
+- Privacy controls (tokenization, redaction) are enforced
+- Access controls (geo, expiration) apply
+- Usage is audited
+- Revocation is instant
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Private Marketplace" icon="building" href="/marketplace/private">
+    Internal data catalog
+  </Card>
+  <Card title="Access Control" icon="lock" href="/control-blocks/access-control">
+    Configure access terms
+  </Card>
+</CardGroup>

@@ -1,0 +1,138 @@
+---
+title: Access Control
+description: Declarative access controls — geo restrictions, expiration, and instant revocation.
+sidebarTitle: Access Control
+icon: lock
+---
+
+# Access Control
+
+**Access on your terms.**
+
+Declarative access controls that enforce where, when, and whether data can flow. Define rules once; enforcement is automatic.
+
+## Geo restrictions
+
+Control where your data can be accessed with allow/deny lists by region.
+
+### Allow list
+
+Only allow requests from specified regions:
+
+```yaml
+access:
+  geo_allow:
+    - US
+    - EU
+    - CA
+```
+
+### Deny list
+
+Block requests from specified regions:
+
+```yaml
+access:
+  geo_deny:
+    - CN
+    - RU
+```
+
+Requests from denied regions receive a `403 Forbidden` response.
+
+## Expiration
+
+Set hard expiration dates on any Virtual API. Automatic cutoff, no manual intervention required.
+
+```yaml
+access:
+  expires: 2025-12-31
+```
+
+After expiration:
+- All requests receive `410 Gone`
+- No data is served
+- Virtual API can be renewed with a new expiration date
+
+### Relative expiration
+
+Set expiration relative to creation:
+
+```yaml
+access:
+  expires_in: 90d  # 90 days from creation
+```
+
+## Instant shutdown
+
+Revoke access immediately with a single action. No waiting for tokens to expire.
+
+```yaml
+# Via API
+POST /v1/virtual-apis/partner-view/revoke
+
+# Response
+{
+  "status": "revoked",
+  "revoked_at": "2025-01-15T10:30:00Z"
+}
+```
+
+Revocation is instant. All subsequent requests receive `403 Forbidden`.
+
+## Rate limiting
+
+Control request volume per consumer:
+
+```yaml
+access:
+  rate_limit:
+    requests: 1000
+    period: 1h
+```
+
+## IP restrictions
+
+Restrict access to specific IP ranges:
+
+```yaml
+access:
+  ip_allow:
+    - 192.168.1.0/24
+    - 10.0.0.0/8
+```
+
+## Combining access controls
+
+All access controls can be combined:
+
+```yaml
+access:
+  # Geographic restrictions
+  geo_allow:
+    - US
+    - EU
+
+  # Time-based expiration
+  expires: 2025-12-31
+
+  # Rate limiting
+  rate_limit:
+    requests: 10000
+    period: 1d
+
+  # IP restrictions
+  ip_allow:
+    - 203.0.113.0/24
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="REST API Delivery" icon="plug" href="/delivery/rest-api">
+    Expose your Virtual API as a REST endpoint
+  </Card>
+  <Card title="MCP Server Delivery" icon="robot" href="/delivery/mcp-server">
+    Enable AI agent access
+  </Card>
+</CardGroup>

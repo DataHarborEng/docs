@@ -1,0 +1,233 @@
+---
+title: Data Control
+description: Field-level privacy controls — redaction, tokenization, and anonymization.
+sidebarTitle: Data Control
+icon: shield
+---
+
+# Data Control
+
+**Privacy controls, not privacy code.**
+
+Field-level privacy controls that protect sensitive data without requiring engineering effort. Configure once, apply everywhere.
+
+## Object Definitions
+
+Data controls are defined per object type in your Virtual API spec. The `objects` key maps resource names to their filter configurations.
+
+Given an API with these endpoints:
+- `/properties` — list of properties
+- `/properties/{propertyId}/inspections` — inspections for a property
+- `/properties/{propertyId}/inspections/{inspectionId}/issues` — issues for an inspection
+
+The spec defines filters for each object type:
+
+```yaml
+objects:
+  properties:    # matches /properties, /properties/{propertyId}
+    filters:
+      - target: 'ownerFirstName'
+        filterType: REDACT
+      - target: 'ownerLastName'
+        filterType: REDACT
+  inspections:   # matches .../inspections, .../inspections/{inspectionId}
+    filters:
+      - target: 'inspectorFirstName'
+        filterType: REDACT
+  issues:        # matches .../issues, .../issues/{issueId}
+    filters:
+      - target: 'title'
+        filterType: REDACT
+```
+
+Each filter has two required fields:
+- `target` — the field name to apply the filter to
+- `filterType` — the operation (REDACT, TOKENIZE, TOKENIZE_ANONYMOUS, ALLOW)
+
+### The _default Object
+
+`_default` is an optional catch-all for objects not explicitly defined.
+
+```yaml
+objects:
+  properties:
+    filters:
+      - target: 'ownerName'
+        filterType: REDACT
+  _default:
+    filters:
+      - target: 'createdBy'
+        filterType: REDACT
+      - target: 'modifiedBy'
+        filterType: REDACT
+```
+
+**Precedence rules:**
+
+| Scenario | Behavior |
+|----------|----------|
+| Request matches undefined object | `_default` filters apply |
+| Request matches named object | Filters merge. If the same `target` appears in both, the named object wins. Other `_default` filters still apply. |
+
+## Filter Types
+
+### Redact
+
+Remove sensitive data entirely. Strings become empty, numbers become zero.
+
+```yaml
+filters:
+  - target: 'ssn'
+    filterType: REDACT
+  - target: 'date_of_birth'
+    filterType: REDACT
+  - target: 'drivers_license'
+    filterType: REDACT
+```
+
+**Input:**
+```json
+{ "name": "Jane Doe", "ssn": "123-45-6789", "balance": 1000 }
+```
+
+**Output:**
+```json
+{ "name": "Jane Doe", "ssn": "", "balance": 1000 }
+```
+
+### Tokenize
+
+Replace sensitive values with consistent, syntax-preserving tokens. Same input always produces the same token — enabling analytics without exposing raw data.
+
+```yaml
+filters:
+  - target: 'email'
+    filterType: TOKENIZE
+  - target: 'phone'
+    filterType: TOKENIZE
+```
+
+**Input:**
+```json
+{ "email": "jane@example.com", "phone": "555-1234" }
+```
+
+**Output:**
+```json
+{ "email": "tok_abc123def456", "phone": "tok_789xyz012" }
+```
+
+Tokenization is **deterministic per Virtual API** — the same input value always produces the same token within that Virtual API. Different Virtual APIs produce different tokens for the same input.
+
+### Tokenize Anonymous
+
+Generate randomized replacements that preserve data structure. Each call produces a different value, making re-identification impossible.
+
+```yaml
+filters:
+  - target: 'email'
+    filterType: TOKENIZE_ANONYMOUS
+  - target: 'name'
+    filterType: TOKENIZE_ANONYMOUS
+```
+
+**Input:**
+```json
+{ "email": "jane@example.com", "name": "Jane Doe" }
+```
+
+**Output (first call):**
+```json
+{ "email": "user_7f3a@anon.local", "name": "Alex Smith" }
+```
+
+**Output (second call):**
+```json
+{ "email": "user_9b2c@anon.local", "name": "Jordan Lee" }
+```
+
+### Allow
+
+Pass data through unchanged. Useful when you want to be explicit about which fields are permitted, or to override a `_default` filter for specific objects.
+
+```yaml
+filters:
+  - target: 'publicName'
+    filterType: ALLOW
+```
+
+**Input:**
+```json
+{ "publicName": "Acme Corp" }
+```
+
+**Output:**
+```json
+{ "publicName": "Acme Corp" }
+```
+
+## Targeting Nested Fields
+
+Use dot notation to target nested fields:
+
+```yaml
+filters:
+  - target: 'user.ssn'
+    filterType: REDACT
+  - target: 'user.address.street'
+    filterType: REDACT
+  - target: 'billing.card_number'
+    filterType: REDACT
+```
+
+## Targeting Arrays
+
+Apply filters to all items in an array:
+
+```yaml
+filters:
+  - target: '[contacts].email'
+    filterType: TOKENIZE
+  - target: '[contacts].phone'
+    filterType: TOKENIZE
+```
+
+## Combining Filters
+
+Apply multiple filter types within an object definition:
+
+```yaml
+objects:
+  customers:
+    filters:
+      - target: 'ssn'
+        filterType: REDACT
+      - target: 'date_of_birth'
+        filterType: REDACT
+      - target: 'email'
+        filterType: TOKENIZE
+      - target: 'phone'
+        filterType: TOKENIZE
+      - target: 'name'
+        filterType: TOKENIZE_ANONYMOUS
+```
+
+## When to Use Each
+
+| Filter Type | Use case |
+|-------------|----------|
+| **REDACT** | Data that should never leave your system (SSN, credentials) |
+| **TOKENIZE** | Identifiers needed for correlation/analytics without exposure |
+| **TOKENIZE_ANONYMOUS** | Data for ML training, testing, or demos |
+| **ALLOW** | Explicitly permit fields, or override `_default` filters |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Data Transform" icon="shuffle" href="/control-blocks/data-transform">
+    Combine and transform fields
+  </Card>
+  <Card title="Access Control" icon="lock" href="/control-blocks/access-control">
+    Geo restrictions and expiration
+  </Card>
+</CardGroup>

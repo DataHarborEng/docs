@@ -1,0 +1,230 @@
+---
+title: Control Block Reference
+description: Detailed reference for all Control Block types.
+---
+
+# Control Block Reference
+
+Detailed reference for all Control Block types and their options.
+
+## Data Control
+
+### redact
+
+Remove sensitive data entirely.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `type` | string | Yes | Must be `redact` |
+| `fields` | array | Yes | Field paths to redact |
+
+**Behavior:**
+- Strings → `""`
+- Numbers → `0`
+- Booleans → `false`
+- Objects → `{}`
+- Arrays → `[]`
+
+```yaml
+- type: redact
+  fields:
+    - ssn
+    - credit_card
+    - user.password
+```
+
+---
+
+### tokenize
+
+Replace with deterministic tokens.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `type` | string | Yes | Must be `tokenize` |
+| `fields` | array | Yes | Field paths to tokenize |
+
+**Behavior:**
+- Same input → same token (within one Virtual API)
+- Different Virtual APIs → different tokens
+- Token format: `tok_[hash]`
+
+```yaml
+- type: tokenize
+  fields:
+    - email
+    - phone
+    - customer_id
+```
+
+---
+
+### anonymize
+
+Replace with random values preserving structure.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `type` | string | Yes | Must be `anonymize` |
+| `fields` | array | Yes | Field paths to anonymize |
+
+**Behavior:**
+- Each request produces different values
+- Format is preserved (email looks like email)
+- Not reversible, not correlatable
+
+```yaml
+- type: anonymize
+  fields:
+    - email
+    - name
+    - address
+```
+
+---
+
+## Data Transform
+
+### combine
+
+Merge fields into a new field.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `type` | string | Yes | Must be `combine` |
+| `fields` | array | Yes | Fields to combine (order matters) |
+| `into` | string | Yes | Name of new field |
+| `separator` | string | No | Separator between values. Default: `" "` |
+| `remove_source` | boolean | No | Remove original fields. Default: `false` |
+
+```yaml
+- type: combine
+  fields:
+    - first_name
+    - last_name
+  into: full_name
+  separator: " "
+  remove_source: true
+```
+
+---
+
+### coalesce
+
+Select first non-empty value.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `type` | string | Yes | Must be `coalesce` |
+| `fields` | array | Yes | Fields to check (order = priority) |
+| `into` | string | Yes | Name of new field |
+
+```yaml
+- type: coalesce
+  fields:
+    - mobile_phone
+    - work_phone
+    - home_phone
+  into: primary_phone
+```
+
+---
+
+## Access Control
+
+Access controls are defined in the `access` block, not as Control Blocks.
+
+### expires
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `expires` | string | ISO 8601 date (`2025-12-31`) or relative (`90d`) |
+
+```yaml
+access:
+  expires: 2025-12-31
+```
+
+---
+
+### geo_allow / geo_deny
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `geo_allow` | array | ISO 3166-1 alpha-2 country codes to allow |
+| `geo_deny` | array | ISO 3166-1 alpha-2 country codes to deny |
+
+```yaml
+access:
+  geo_allow:
+    - US
+    - CA
+    - EU  # Special value: all EU countries
+```
+
+---
+
+### ip_allow
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `ip_allow` | array | CIDR ranges to allow |
+
+```yaml
+access:
+  ip_allow:
+    - 10.0.0.0/8
+    - 192.168.1.0/24
+```
+
+---
+
+### rate_limit
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `rate_limit.requests` | number | Max requests per period |
+| `rate_limit.period` | string | Time period (`1m`, `1h`, `1d`) |
+
+```yaml
+access:
+  rate_limit:
+    requests: 10000
+    period: 1d
+```
+
+---
+
+## Field path syntax
+
+### Simple fields
+
+```yaml
+fields:
+  - email
+  - phone
+```
+
+### Nested fields
+
+```yaml
+fields:
+  - user.email
+  - billing.address.street
+```
+
+### Array items
+
+```yaml
+fields:
+  - contacts[].email        # All items in array
+  - orders[].items[].sku    # Nested arrays
+```
+
+### Wildcards
+
+```yaml
+fields:
+  - "*.email"               # email field at any path
+  - "user.*.phone"          # phone in any user sub-object
+```

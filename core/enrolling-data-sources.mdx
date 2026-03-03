@@ -1,0 +1,125 @@
+---
+title: Enrolling Data Sources
+description: Connect your existing APIs to DataHarbor.
+---
+
+# Enrolling Data Sources
+
+Enrollment connects your existing data source to DataHarbor. Once enrolled, you can create multiple Virtual APIs from a single source.
+
+## Supported sources
+
+| Source Type | Status |
+|-------------|--------|
+| REST/JSON APIs | Available |
+| Azure Fabric | Coming Soon |
+| Databricks | Coming Soon |
+| Snowflake | Coming Soon |
+| BigQuery | Coming Soon |
+
+## REST API enrollment
+
+```yaml
+source:
+  name: customer-api
+  type: rest
+  base_url: https://api.yourcompany.com
+
+  auth:
+    type: bearer
+    token: ${CUSTOMER_API_TOKEN}
+
+  endpoints:
+    - path: /customers
+      method: GET
+    - path: /customers/{id}
+      method: GET
+    - path: /orders
+      method: GET
+```
+
+## Authentication types
+
+### Bearer token
+
+```yaml
+auth:
+  type: bearer
+  token: ${API_TOKEN}
+```
+
+### API key (header)
+
+```yaml
+auth:
+  type: api_key
+  header: X-API-Key
+  key: ${API_KEY}
+```
+
+### API key (query parameter)
+
+```yaml
+auth:
+  type: api_key
+  param: api_key
+  key: ${API_KEY}
+```
+
+### Basic auth
+
+```yaml
+auth:
+  type: basic
+  username: ${USERNAME}
+  password: ${PASSWORD}
+```
+
+## Schema discovery
+
+When you enroll a source, DataHarbor:
+1. Calls each endpoint to sample response structure
+2. Learns the schema shape over time
+3. Detects net-new fields as they appear
+4. Flags potentially sensitive fields for review
+
+You can also provide a schema explicitly:
+
+```yaml
+source:
+  name: customer-api
+  type: rest
+  base_url: https://api.yourcompany.com
+
+  schema:
+    /customers:
+      type: array
+      items:
+        type: object
+        properties:
+          id: { type: string }
+          email: { type: string, sensitive: true }
+          name: { type: string }
+          ssn: { type: string, sensitive: true }
+```
+
+## Environment variables
+
+Use `${VAR_NAME}` syntax to reference environment variables. Never hardcode secrets in configuration files.
+
+```yaml
+auth:
+  type: bearer
+  token: ${CUSTOMER_API_TOKEN}  # Resolved at runtime
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Virtual APIs" icon="layer-group" href="/core/virtual-apis">
+    Create Virtual APIs from your enrolled source
+  </Card>
+  <Card title="Schema Analytics" icon="chart-line" href="/protect/schema-analytics">
+    Monitor schema changes over time
+  </Card>
+</CardGroup>

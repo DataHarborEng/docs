@@ -1,97 +1,51 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: Introduction
+description: DataHarbor enables safe data reuse by publishing governed, purpose-limited data products from a single source of truth.
 ---
 
-## Setting up
+# Welcome to DataHarbor
 
-Get your documentation site up and running in minutes.
+**Build for the frontier. Your data — Governed at the speed of tomorrow.**
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+DataHarbor lets you publish **governed, purpose-limited data products** from a single source of truth, without duplicating data or rewriting APIs.
 
-## Make it yours
+## The problem
 
-Design a docs site that looks great and empowers your users.
+Data was never meant to be reused this much. What used to be a single internal API is now expected to support external partners, analytics vendors, internal teams, and AI agents.
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+The result:
+- Engineering clones APIs endlessly
+- Privacy and compliance risk increases with every fork
+- Legal blocks deals
+- AI makes exposure harder to reason about
+
+## The DataHarbor approach
+
+**One dataset. Many governed uses.**
+
+Instead of copying or locking data away, DataHarbor sits in front of your existing data source and lets you create **Virtual APIs** — governed views of the same underlying data.
+
+Each Virtual API:
+- Is purpose-specific
+- Enforces privacy and compliance rules declaratively
+- Can be versioned, audited, expired, or revoked
+- Can be safely consumed by humans *or machines*
+
+You reuse the data — not the risk.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get up and running in 5 minutes
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Concepts" icon="book" href="/concepts">
+    Understand the core concepts
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Virtual APIs" icon="layer-group" href="/core/virtual-apis">
+    Learn about Virtual APIs
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Control Blocks" icon="shield" href="/control-blocks/data-control">
+    Explore privacy controls
   </Card>
-</Columns>
-
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+</CardGroup>

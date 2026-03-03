@@ -1,68 +1,82 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "theme": "maple",
+  "name": "DataHarbor",
+  "description": "DataHarbor enables safe data reuse by publishing governed, purpose-limited data products from a single source of truth—built for an AI-driven world.",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#0ea5e9",
+    "light": "#06b6d4",
+    "dark": "#0f172a"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/favicon.ico",
+  "appearance": {
+    "default": "light"
+  },
+  "styling": {
+    "eyebrow": "breadcrumbs",
+    "codeBlock": "dark"
+  },
   "navigation": {
     "tabs": [
       {
         "tab": "Guides",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Getting Started",
             "pages": [
               "index",
               "quickstart",
-              "development"
+              "concepts"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "core/virtual-apis",
+              "core/enrolling-data-sources"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Control Blocks",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "control-blocks/data-control",
+              "control-blocks/data-transform",
+              "control-blocks/access-control",
+              "control-blocks/data-fusion"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Delivery",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "delivery/rest-api",
+              "delivery/mcp-server",
+              "delivery/data-lake"
+            ]
+          },
+          {
+            "group": "Protect",
+            "pages": [
+              "protect/schema-analytics",
+              "protect/data-remediation"
+            ]
+          },
+          {
+            "group": "Marketplace",
+            "pages": [
+              "marketplace/global",
+              "marketplace/private"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Configuration",
             "pages": [
-              "api-reference/introduction"
-            ]
-          },
-          {
-            "group": "Endpoint examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/yaml-reference",
+              "api-reference/control-block-reference"
             ]
           }
         ]
@@ -71,52 +85,35 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Website",
+          "href": "https://dataharbor.co",
+          "icon": "globe"
         }
       ]
     }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.png"
   },
   "navbar": {
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:support@dataharbor.co"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Join the Waitlist",
+      "href": "https://dataharbor.co"
     }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/dataharboreng",
+      "linkedin": "https://linkedin.com/company/dataharbor",
+      "website": "https://dataharbor.co"
     }
   }
 }

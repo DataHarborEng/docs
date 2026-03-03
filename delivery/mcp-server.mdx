@@ -1,0 +1,138 @@
+---
+title: MCP Server Delivery
+description: Turn any Virtual API into a governed MCP endpoint for AI agent consumption.
+---
+
+# MCP Server Delivery
+
+**Governed AI data access. No separate security model.**
+
+Turn any Virtual API into a governed MCP (Model Context Protocol) endpoint for AI agent consumption. OAuth credentials and a URL — that's all you need to connect Claude, ChatGPT, or any MCP client.
+
+## How it works
+
+AI agents inherit the same controls as any other consumer:
+- Same privacy controls (redact, tokenize, anonymize)
+- Same access controls (geo, expiration, revocation)
+- Same audit trail
+
+No separate security model for AI.
+
+```yaml
+virtual_api:
+  name: ai-customer-view
+  source: customer-api
+
+  controls:
+    - type: tokenize
+      fields: [email, phone]
+    - type: redact
+      fields: [ssn]
+
+  delivery:
+    type: mcp
+    oauth:
+      enabled: true
+```
+
+## Authentication
+
+MCP delivery uses OAuth 2.0:
+
+```bash
+# Get OAuth credentials from the dashboard
+Client ID: dh_mcp_client_abc123
+Client Secret: dh_mcp_secret_xyz789
+Token URL: https://auth.dataharbor.dev/oauth/token
+```
+
+### Connect from Claude Desktop
+
+Add to your Claude Desktop configuration:
+
+```json
+{
+  "mcpServers": {
+    "dataharbor-customers": {
+      "url": "https://mcp.dataharbor.dev/v1/ai-customer-view",
+      "oauth": {
+        "clientId": "dh_mcp_client_abc123",
+        "clientSecret": "dh_mcp_secret_xyz789",
+        "tokenUrl": "https://auth.dataharbor.dev/oauth/token"
+      }
+    }
+  }
+}
+```
+
+## Auto-generated tools
+
+DataHarbor automatically generates MCP tools based on your Virtual API schema:
+
+| Tool | Description |
+|------|-------------|
+| `read_customers` | Fetch all records |
+| `search_customers` | Search by field values |
+| `get_customer` | Fetch a single record by ID |
+| `filter_customers` | Apply filters (equals, contains, range) |
+
+### Example conversation
+
+```
+User: Find customers in California with balance over $1000
+
+Claude: I'll search the customer database for you.
+[Calling search_customers with filters: state=CA, balance>1000]
+
+Found 23 customers matching your criteria:
+- tok_abc123 (email tokenized) - Balance: $2,450
+- tok_def456 (email tokenized) - Balance: $1,890
+...
+```
+
+The AI sees tokenized/redacted data — never the raw values.
+
+## Governance in action
+
+| What AI sees | What's protected |
+|--------------|------------------|
+| `tok_abc123` | Real email address |
+| `tok_def456` | Real phone number |
+| `""` (empty) | SSN, date of birth |
+
+The AI can still:
+- Count and aggregate
+- Filter and search
+- Correlate by tokens (within the same Virtual API)
+
+The AI cannot:
+- See raw PII
+- Reverse tokens
+- Access data after expiration/revocation
+
+## Audit trail
+
+Every AI request is logged:
+
+```json
+{
+  "timestamp": "2025-01-15T10:30:00Z",
+  "virtual_api": "ai-customer-view",
+  "delivery": "mcp",
+  "tool": "search_customers",
+  "filters": { "state": "CA", "balance": { "gt": 1000 } },
+  "records_returned": 23,
+  "oauth_client": "dh_mcp_client_abc123"
+}
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Data Lake Delivery" icon="database" href="/delivery/data-lake">
+    Sync governed data to your data platform
+  </Card>
+  <Card title="Schema Analytics" icon="chart-line" href="/protect/schema-analytics">
+    Monitor what AI agents access
+  </Card>
+</CardGroup>

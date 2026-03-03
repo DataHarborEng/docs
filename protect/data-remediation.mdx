@@ -1,0 +1,135 @@
+---
+title: Data Remediation
+description: Proactive AI-assisted remediation for emerging data risks.
+---
+
+<Info>
+  Data Remediation is **coming soon**. This page describes planned functionality.
+</Info>
+
+# Data Remediation
+
+**Fix it before it leaves the door.**
+
+Proactive AI-assisted remediation. When risky data patterns appear, DataHarbor can apply protection immediately and alert you to review.
+
+## How it works
+
+1. **Detect** — Schema Analytics identifies a risk
+2. **Suggest** — DataHarbor recommends a remediation
+3. **Apply** — Optionally auto-apply with human-in-the-loop approval
+4. **Verify** — Confirm the fix resolves the issue
+
+## Remediation modes
+
+### Manual (default)
+
+Receive alerts, apply fixes yourself:
+
+```yaml
+remediation:
+  mode: manual
+  # You receive alerts; you apply controls
+```
+
+### Suggested
+
+DataHarbor suggests fixes with one-click apply:
+
+```json
+{
+  "alert": "uncovered_sensitive_field",
+  "field": "social_security_number",
+  "suggested_remediation": {
+    "control": "redact",
+    "confidence": 0.98
+  },
+  "actions": {
+    "apply": "POST /v1/remediations/rem_123/apply",
+    "dismiss": "POST /v1/remediations/rem_123/dismiss"
+  }
+}
+```
+
+### Auto-protect
+
+Automatically apply controls to high-confidence risks, notify for review:
+
+```yaml
+remediation:
+  mode: auto_protect
+  threshold: 0.95  # Only auto-apply when confidence >= 95%
+  notify: always
+```
+
+When auto-protect triggers:
+
+```json
+{
+  "event": "auto_remediation_applied",
+  "field": "credit_card_number",
+  "control_applied": "redact",
+  "confidence": 0.99,
+  "status": "pending_review",
+  "review_url": "https://app.dataharbor.dev/remediations/rem_456"
+}
+```
+
+## Remediation types
+
+| Risk | Suggested remediation |
+|------|----------------------|
+| SSN, credit card, passport | Redact |
+| Email, phone (analytics use) | Tokenize |
+| Email, phone (demo use) | Anonymize |
+| Name + DOB + ZIP (combo risk) | Generalize ZIP to 3-digit |
+| New unknown PII field | Hold for review |
+
+## Human-in-the-loop
+
+Even in auto-protect mode, you maintain control:
+
+- **Review queue**: All auto-applied remediations appear for review
+- **Undo**: Revert any auto-applied control within 24 hours
+- **Tune**: Adjust confidence thresholds per field type
+- **Exclude**: Mark specific fields as "known safe"
+
+```yaml
+remediation:
+  mode: auto_protect
+  threshold: 0.95
+  
+  exclusions:
+    - field: internal_reference_id
+      reason: "Not PII, just looks like one"
+```
+
+## Audit trail
+
+Every remediation is logged:
+
+```json
+{
+  "remediation_id": "rem_789",
+  "timestamp": "2025-01-15T10:30:00Z",
+  "virtual_api": "partner-view",
+  "field": "account_number",
+  "risk_detected": "uncovered_sensitive_field",
+  "action": "auto_redact",
+  "confidence": 0.97,
+  "reviewed_by": "jane@yourcompany.com",
+  "reviewed_at": "2025-01-15T14:22:00Z",
+  "review_decision": "approved"
+}
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Schema Analytics" icon="chart-line" href="/protect/schema-analytics">
+    Understand what triggers remediation
+  </Card>
+  <Card title="Data Control" icon="shield" href="/control-blocks/data-control">
+    Manual control application
+  </Card>
+</CardGroup>

@@ -1,0 +1,119 @@
+---
+title: Data Transform
+description: Real-time field transformations applied at the data boundary.
+sidebarTitle: Data Transform
+icon: shuffle
+tag: Preview
+---
+
+<Note>
+  Data Transform is currently in **Preview**. Functionality may change.
+</Note>
+
+# Data Transform
+
+**Transform in flight, not in a pipeline.**
+
+Real-time field transformations applied at the data boundary. No ETL pipelines or data duplication required.
+
+## Operations
+
+### Combine
+
+Merge two string fields into a single new field.
+
+```yaml
+controls:
+  - type: combine
+    fields:
+      - first_name
+      - last_name
+    into: full_name
+    separator: " "
+```
+
+**Input:**
+```json
+{ "first_name": "Jane", "last_name": "Doe", "email": "jane@example.com" }
+```
+
+**Output:**
+```json
+{ "first_name": "Jane", "last_name": "Doe", "full_name": "Jane Doe", "email": "jane@example.com" }
+```
+
+### Coalesce
+
+Select the first non-empty value from two fields of the same type. Ideal for fallback logic and data normalization.
+
+```yaml
+controls:
+  - type: coalesce
+    fields:
+      - mobile_phone
+      - home_phone
+    into: primary_phone
+```
+
+**Input:**
+```json
+{ "mobile_phone": "", "home_phone": "555-1234" }
+```
+
+**Output:**
+```json
+{ "mobile_phone": "", "home_phone": "555-1234", "primary_phone": "555-1234" }
+```
+
+## Combining with privacy controls
+
+Apply transformations before or after privacy controls:
+
+```yaml
+controls:
+  # First, combine name fields
+  - type: combine
+    fields: [first_name, last_name]
+    into: full_name
+    separator: " "
+
+  # Then, anonymize the combined name
+  - type: anonymize
+    fields:
+      - full_name
+
+  # Redact the original fields
+  - type: redact
+    fields:
+      - first_name
+      - last_name
+```
+
+## Removing original fields
+
+Optionally remove source fields after transformation:
+
+```yaml
+controls:
+  - type: combine
+    fields: [first_name, last_name]
+    into: full_name
+    separator: " "
+    remove_source: true
+```
+
+**Output:**
+```json
+{ "full_name": "Jane Doe", "email": "jane@example.com" }
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Data Control" icon="shield" href="/control-blocks/data-control">
+    Redaction, tokenization, anonymization
+  </Card>
+  <Card title="Access Control" icon="lock" href="/control-blocks/access-control">
+    Geo restrictions and expiration
+  </Card>
+</CardGroup>

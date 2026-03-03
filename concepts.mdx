@@ -1,0 +1,111 @@
+---
+title: Concepts
+description: Core concepts and terminology in DataHarbor.
+---
+
+# Core Concepts
+
+## Virtual API
+
+A **Virtual API** is a published, governed view of an existing dataset. It's the fundamental unit in DataHarbor.
+
+Each Virtual API:
+- Points to a single enrolled data source
+- Applies Control Blocks (privacy, transformation, access rules)
+- Can be delivered via REST, MCP, or Data Lake
+- Is versioned, auditable, and revocable
+
+### Object Definitions
+
+Virtual APIs use a YAML spec with an `objects` key containing named object definitions. Each object definition specifies filters that apply to that resource type.
+
+Given an API with these endpoints:
+- `/properties` — list of properties
+- `/properties/{propertyId}/inspections` — inspections for a property
+- `/properties/{propertyId}/inspections/{inspectionId}/issues` — issues for an inspection
+
+The spec defines filters for each object type:
+
+```yaml
+objects:
+  properties:    # matches /properties, /properties/{propertyId}
+    filters:
+      - target: 'ownerFirstName'
+        filterType: REDACT
+      - target: 'ownerLastName'
+        filterType: REDACT
+  inspections:   # matches .../inspections, .../inspections/{inspectionId}
+    filters:
+      - target: 'inspectorFirstName'
+        filterType: REDACT
+  issues:        # matches .../issues, .../issues/{issueId}
+    filters:
+      - target: 'title'
+        filterType: REDACT
+```
+
+### URL Matching
+
+DataHarbor automatically applies the correct object definition based on the API URL. Object names must match URL segments exactly.
+
+For a request to `/properties/{propertyId}/inspections/{inspectionId}/issues`, the system:
+1. Parses the URL path segments
+2. Matches against defined objects
+3. Applies the deepest match — in this case, `issues`
+
+This works for both collections and single resources:
+- `/properties/{propertyId}/inspections/{inspectionId}/issues` → applies `issues` filters to the list
+- `/properties/{propertyId}/inspections/{inspectionId}/issues/{issueId}` → applies `issues` filters to that single object
+
+### The _default Object
+
+`_default` is an optional catch-all for any object not explicitly defined.
+
+```yaml
+objects:
+  properties:
+    filters:
+      - target: 'ownerName'
+        filterType: REDACT
+  _default:
+    filters:
+      - target: 'createdBy'
+        filterType: REDACT
+```
+
+When a request matches an undefined object, `_default` filters apply. When a request matches a named object, filters merge — the named object's filters take precedence on conflicts, and `_default` fills in the rest.
+
+## Control Blocks
+
+**Control Blocks** are declarative rules applied to a Virtual API. Three categories:
+
+| Block | Purpose |
+|-------|---------|
+| **Data Control** | Privacy operations: redact, tokenize, anonymize |
+| **Data Transform** | Field transformations: combine, coalesce |
+| **Access Control** | Access rules: geo restrictions, expiration, shutdown |
+
+Control Blocks are composable. Apply as many as needed to a single Virtual API.
+
+## Recipe
+
+A **Recipe** is the complete declarative configuration of a Virtual API — source, controls, delivery, and access rules combined.
+
+## Enrollment
+
+**Enrollment** is the process of connecting an existing data source to DataHarbor. Currently supports REST/JSON APIs; data lakes coming soon.
+
+## Delivery
+
+**Delivery** is how consumers access a Virtual API:
+- **REST API** — Standard HTTP endpoint with API key auth
+- **MCP Server** — Model Context Protocol endpoint for AI agents
+- **Data Lake** — Scheduled sync to Fabric, Databricks, Snowflake, BigQuery
+
+## Governance
+
+Every Virtual API includes governance primitives:
+- **Versioning** — Track what changed, when, under which policy
+- **Expiration** — Set end dates for access
+- **Revocation** — Cut off access instantly
+- **Audit trail** — Correlate access with policy versions
