@@ -33,7 +33,8 @@
             "group": "Core",
             "pages": [
               "core/virtual-apis",
-              "core/enrolling-data-sources"
+              "core/enrolling-data-sources",
+              "core/agents"
             ]
           },
           {

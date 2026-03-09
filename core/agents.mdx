@@ -1,0 +1,102 @@
+---
+title: Agent Visibility
+description: Control how your Virtual APIs are discovered and accessed by AI agents through the agent card system.
+---
+
+# Agent Visibility
+
+**From private to fully public — one setting.**
+
+Every Virtual API can be exposed as an AI agent endpoint via the [Model Context Protocol (MCP)](/delivery/mcp-server). The **Visibility** setting controls who can discover your agent, whether authentication is required, and whether it appears in the DataHarbor catalog.
+
+## Visibility levels
+
+Visibility is a single, escalating setting — each level opens access further:
+
+| Visibility | Agent Card | Catalog | MCP Auth | Description |
+|---|---|---|---|---|
+| **Disabled** | Not served | No | N/A | Not an agent. Nobody can discover or connect to it. |
+| **Private** | Auth only | No | Required | Only authenticated clients can find and use it. Internal use only. |
+| **Unlisted Open** | Public | No | Open | Anyone with the link can use it freely, but it won't appear in the catalog. |
+| **Listed Open** | Public | Yes | Open | Fully public — discoverable in the catalog, open to all. |
+
+### Disabled
+
+The default state. The Virtual API functions normally for REST delivery but does not serve an agent card. Requests to the agent card endpoint return 404.
+
+### Private
+
+The agent serves a card only to authenticated clients. Anonymous requests receive a minimal stub card — enough to know the agent exists and how to authenticate, but no operational details.
+
+Authenticated clients see the full agent card including:
+- Security schemes and requirements
+- Extended card with skill details and parameters
+
+MCP sessions require OAuth authentication.
+
+### Unlisted Open
+
+The agent card is fully public with no security schemes — anyone can read it and connect without authentication. However, the agent does not appear in the DataHarbor catalog.
+
+This is ideal for:
+- Embedding agents in specific applications
+- Direct integrations where you share the URL
+- Testing before listing publicly
+
+### Listed Open
+
+Like Unlisted Open, but the agent is indexed in the DataHarbor catalog and fully discoverable. This is the most open setting — anyone can find it, connect, and use it without authentication.
+
+## Agent cards
+
+An agent card is a machine-readable description of your agent's capabilities, following the [Model Context Protocol](https://modelcontextprotocol.io) spec. DataHarbor generates it automatically from your Virtual API configuration.
+
+### What's in an agent card
+
+| Field | Description |
+|---|---|
+| **Name and description** | From your Virtual API configuration |
+| **Skills** | Auto-generated from your API's endpoints and schema |
+| **Security schemes** | OAuth requirements (Private only) |
+| **Extended card URL** | Link to full details (Private only) |
+
+### Stub vs. full card
+
+For **Private** visibility, unauthenticated requests receive a stub card:
+
+```json
+{
+  "name": "customer-data-agent",
+  "description": "Customer data with PII controls",
+  "securitySchemes": {
+    "oauth2": {
+      "type": "oauth2",
+      "flows": { "..." }
+    }
+  }
+}
+```
+
+Authenticated requests receive the full card with skills, parameters, and the extended card URL.
+
+For **Unlisted Open** and **Listed Open**, all requests receive the full card — no security schemes are included, and the extended card endpoint is not served.
+
+## Choosing a visibility level
+
+| Scenario | Recommended |
+|---|---|
+| Not using MCP delivery | Disabled |
+| Internal agents for your own AI tools | Private |
+| Sharing an agent with a specific partner | Unlisted Open |
+| Publishing an agent for anyone to use | Listed Open |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="MCP Server Delivery" icon="robot" href="/delivery/mcp-server">
+    Configure MCP endpoints
+  </Card>
+  <Card title="Global Marketplace" icon="store" href="/marketplace/global">
+    List and monetize your agents
+  </Card>
+</CardGroup>
