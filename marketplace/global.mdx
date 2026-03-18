@@ -1,159 +1,83 @@
 ---
 title: Global Marketplace
-description: Monetize and share governed data with partners and buyers.
+description: Publish governed Virtual APIs for discovery and monetization in the DataHarbor registry.
+sidebarTitle: Global Marketplace
+icon: store
+tag: Coming Soon
 ---
 
-<Info>
-  Global Marketplace is **coming soon**. This page describes planned functionality.
-</Info>
+<Note>
+  Global Marketplace is **coming soon**. We'd love to hear about your use case — [get in touch](mailto:hello@dataharbor.co?subject=Interest%20in%20Global%20Marketplace).
+</Note>
 
 # Global Marketplace
 
-**Monetize your data. Keep your control.**
+**Make your data discoverable. Monetize it if you want.**
 
-Monetize and share governed data with partners, buyers, and the broader ecosystem. Discovery, access control, and billing — all in one platform.
+Publish governed Virtual APIs for discovery — free or per-request — with privacy rules that travel with every call. Partners and buyers browse listings, preview schemas, and request access instantly.
+
+## Registry endpoint
+
+The registry is the machine-readable index of all listed agents. It's live today:
+
+```
+https://service.dataharbor.co/registry
+```
+
+AI agents query the registry to discover governed endpoints ready for instant connection. Every Virtual API with **Listed Open** [visibility](/core/agents#listed-open) is automatically indexed.
 
 ## How it works
 
-1. **List** your Virtual API on the marketplace
-2. **Configure** pricing and access terms
-3. **Approve** or auto-approve access requests
-4. **Monitor** usage and revenue
-5. **Revoke** access anytime
+1. **Create a Virtual API** — Define your source, apply privacy controls, and set access rules.
+2. **Set visibility to Listed Open** — Your Virtual API must have [Listed Open](/core/agents#listed-open) visibility to appear in the registry and catalog.
+3. **Buyers discover and request** — Buyers browse listings, preview schemas, see governance policies, and request access.
+4. **Access flows through controls** — Every request goes through your Virtual API's governance. Usage is metered, logged, and auditable. Revoke anytime.
 
-```yaml
-virtual_api:
-  name: property-valuations
-  source: valuation-api
+## Visibility requirement
 
-  controls:
-    - type: tokenize
-      fields: [owner_name, owner_email]
+Only Virtual APIs with **Listed Open** visibility appear in the Global Marketplace. This is the most open setting — the agent card is fully public, no authentication is required, and the agent is indexed in the catalog.
 
-  marketplace:
-    listed: true
-    visibility: public
-    
-    pricing:
-      model: per_request
-      price: 0.02  # $0.02 per request
-    
-    terms:
-      requires_approval: true
-      allowed_use_cases:
-        - analytics
-        - research
-      prohibited_use_cases:
-        - resale
-        - marketing
-```
+| Visibility | In Registry | In Catalog |
+|---|---|---|
+| Disabled | No | No |
+| Private | No | No |
+| Unlisted Open | No | No |
+| **Listed Open** | **Yes** | **Yes** |
 
-## Pricing models
+To configure visibility, see [Agent Visibility](/core/agents).
 
-### Per-request
+## Agent Catalog
 
-Charge per API call:
+The Global Marketplace makes your data discoverable to humans. The Agent Catalog makes the same listings discoverable by machines — programmatically, via the A2A protocol.
 
-```yaml
-pricing:
-  model: per_request
-  price: 0.02
-```
-
-### Subscription
-
-Monthly access fee:
-
-```yaml
-pricing:
-  model: subscription
-  price: 500  # $500/month
-  rate_limit: 100000/month
-```
-
-### Free
-
-Open access with governance:
-
-```yaml
-pricing:
-  model: free
-  rate_limit: 1000/day
-```
-
-## Discovery
-
-Buyers browse the marketplace and see:
-
-- **Description**: What data is available
-- **Schema preview**: Field names and types (not values)
-- **Pricing**: Cost structure
-- **Terms**: Allowed and prohibited use cases
-- **Governance**: What controls are applied
-
-```json
-{
-  "listing": "property-valuations",
-  "provider": "Acme Data Co",
-  "description": "Residential property valuations for US markets",
-  "fields": ["property_id", "address", "valuation", "valuation_date"],
-  "controls_applied": ["owner PII tokenized"],
-  "pricing": "$0.02/request",
-  "rating": 4.8,
-  "total_consumers": 47
-}
-```
-
-## Access requests
-
-Buyers request access; you approve:
-
-```json
-{
-  "request_id": "req_123",
-  "listing": "property-valuations",
-  "requester": "Analytics Corp",
-  "use_case": "Real estate market research",
-  "requested_at": "2025-01-15T10:00:00Z",
-  "status": "pending_approval"
-}
-```
-
-Or enable auto-approval:
-
-```yaml
-marketplace:
-  requires_approval: false
-  auto_approve_if:
-    - use_case_in: [analytics, research]
-    - company_verified: true
-```
+- **Agent discovery** — Every listed Virtual API auto-generates a standards-compliant A2A agent card. Zero-config discoverability.
+- **Agent-to-agent access** — Agents query, discover, and negotiate access to your governed data through the registry.
 
 ## Use cases
 
 | Use case | Description |
 |----------|-------------|
-| **Data monetization** | Turn datasets into revenue streams |
-| **Partner data exchange** | Share tokenized data without losing control |
-| **AI-ready endpoints** | List MCP-enabled Virtual APIs for AI developers |
-| **Industry data networks** | Participate in vertical-specific exchanges |
+| **Data monetization** | Turn proprietary datasets into revenue streams with free or per-request access |
+| **Partner data exchange** | Share tokenized or redacted data with partners without losing control |
+| **AI-ready endpoints** | List MCP-enabled Virtual APIs in the live registry for AI agent discovery |
+| **Industry data networks** | Participate in vertical-specific exchanges with anonymized benchmarks |
 
 ## Governance travels with data
 
 Every marketplace consumer is bound by your Virtual API's controls:
 
-- Privacy controls (tokenization, redaction) are enforced
-- Access controls (geo, expiration) apply
-- Usage is audited
+- Privacy controls (tokenization, redaction) are enforced on every call
+- Access controls (geo restrictions, expiration) apply
+- Usage is metered, logged, and auditable
 - Revocation is instant
 
 ## Next steps
 
 <CardGroup cols={2}>
+  <Card title="Agent Visibility" icon="eye" href="/core/agents">
+    Configure visibility levels
+  </Card>
   <Card title="Private Marketplace" icon="building" href="/marketplace/private">
     Internal data catalog
-  </Card>
-  <Card title="Access Control" icon="lock" href="/control-blocks/access-control">
-    Configure access terms
   </Card>
 </CardGroup>
