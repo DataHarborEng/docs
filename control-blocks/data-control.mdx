@@ -173,7 +173,7 @@ Masking behavior varies by data type:
 | Type | Rule | Example |
 |------|------|---------|
 | `string` | Keeps first & last N characters visible (N=2 for strings longer than 4 chars, N=1 otherwise). Strings of 2 or fewer characters are fully masked. Whitespace is preserved. | `"John Smith"` → `"Jo** ***th"` |
-| `double` | Zeros leading digits, keeps last 2 visible per segment | `123456.78` → `000056.08` |
+| `double` | Zeros leading digits, keeps last 2 visible per segment | `123456.78` → `000056.78` |
 | `long` | Zeros leading digits, keeps last 2 visible | `5551234567` → `0000000067` |
 | `bool` | Always returns `false` | `true` → `false` |
 
