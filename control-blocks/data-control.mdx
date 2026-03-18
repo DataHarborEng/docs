@@ -1,6 +1,6 @@
 ---
 title: Data Control
-description: Field-level privacy controls — redaction, tokenization, and anonymization.
+description: Field-level privacy controls — redaction, tokenization, masking, hashing, and anonymization.
 sidebarTitle: Data Control
 icon: shield
 ---
@@ -42,7 +42,7 @@ objects:
 
 Each filter has two required fields:
 - `target` — the field name to apply the filter to
-- `filterType` — the operation (REDACT, TOKENIZE, TOKENIZE_ANONYMOUS, ALLOW)
+- `filterType` — the operation (REDACT, TOKENIZE, TOKENIZE_ANONYMOUS, MASK, HASH, ALLOW)
 
 ### The _default Object
 
@@ -146,6 +146,72 @@ filters:
 { "email": "user_9b2c@anon.local", "name": "Jordan Lee" }
 ```
 
+### Mask
+
+Partially redact values while preserving enough structure for context. Useful in support, debugging, and audit log scenarios where you need to understand the data shape without revealing full values.
+
+```yaml
+filters:
+  - target: 'ssn'
+    filterType: MASK
+  - target: 'phone'
+    filterType: MASK
+```
+
+**Input:**
+```json
+{ "name": "John Smith", "ssn": "123-45-6789", "phone": 5551234567 }
+```
+
+**Output:**
+```json
+{ "name": "Jo** ***th", "ssn": "12*-**-**89", "phone": 67 }
+```
+
+Masking behavior varies by data type:
+
+| Type | Rule | Example |
+|------|------|---------|
+| `string` | Keeps first & last N characters visible (N=2 for strings longer than 4 chars, N=1 otherwise). Strings of 2 or fewer characters are fully masked. Whitespace is preserved. | `"John Smith"` → `"Jo** ***th"` |
+| `double` | Zeros leading digits, keeps last 2 visible per segment | `123456.78` → `000056.08` |
+| `long` | Zeros leading digits, keeps last 2 visible | `5551234567` → `0000000067` |
+| `bool` | Always returns `false` | `true` → `false` |
+
+### Hash
+
+Replace values with a one-way SHA-256 digest. Consumers can correlate and deduplicate records across datasets without seeing real values — the same input within the same Virtual API always produces the same hash.
+
+```yaml
+filters:
+  - target: 'email'
+    filterType: HASH
+  - target: 'customerId'
+    filterType: HASH
+```
+
+**Input:**
+```json
+{ "email": "jane@example.com", "customerId": 12345 }
+```
+
+**Output:**
+```json
+{ "email": "a3f2b8c1e9d7....", "customerId": 7293810456 }
+```
+
+Hash behavior varies by data type:
+
+| Type | Output | Notes |
+|------|--------|-------|
+| `string` | 64-character hex digest | Full SHA-256 hex of `scope:input` |
+| `double` | Deterministic double | Derived from hash bytes |
+| `long` | Deterministic long | From first 8 hash bytes |
+| `bool` | Deterministic boolean | Based on first hash byte |
+
+<Info>
+  Hashing is **scope-bound** — different Virtual APIs produce different hashes for the same input value, preventing cross-lease correlation.
+</Info>
+
 ### Allow
 
 Pass data through unchanged. Useful when you want to be explicit about which fields are permitted, or to override a `_default` filter for specific objects.
@@ -207,9 +273,11 @@ objects:
       - target: 'email'
         filterType: TOKENIZE
       - target: 'phone'
-        filterType: TOKENIZE
+        filterType: MASK
       - target: 'name'
         filterType: TOKENIZE_ANONYMOUS
+      - target: 'customerId'
+        filterType: HASH
 ```
 
 ## When to Use Each
@@ -219,6 +287,8 @@ objects:
 | **REDACT** | Data that should never leave your system (SSN, credentials) |
 | **TOKENIZE** | Identifiers needed for correlation/analytics without exposure |
 | **TOKENIZE_ANONYMOUS** | Data for ML training, testing, or demos |
+| **MASK** | Support/debugging contexts where partial visibility is needed |
+| **HASH** | Correlation and deduplication without exposing original values |
 | **ALLOW** | Explicitly permit fields, or override `_default` filters |
 
 ## Next steps
