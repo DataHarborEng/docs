@@ -43,6 +43,7 @@
               "control-blocks/data-control",
               "control-blocks/data-transform",
               "control-blocks/access-control",
+              "control-blocks/backplane-control",
               "control-blocks/data-fusion"
             ]
           },
