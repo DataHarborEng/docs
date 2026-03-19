@@ -17,31 +17,29 @@ Each Virtual API:
 
 ### Object Definitions
 
-Virtual APIs use a YAML spec with an `objects` key containing named object definitions. Each object definition specifies filters that apply to that resource type.
+Virtual APIs use a YAML spec with an `objects` key containing named object definitions. Each object definition specifies controls that apply to that resource type.
 
 Given an API with these endpoints:
 - `/properties` — list of properties
 - `/properties/{propertyId}/inspections` — inspections for a property
 - `/properties/{propertyId}/inspections/{inspectionId}/issues` — issues for an inspection
 
-The spec defines filters for each object type:
+The spec defines controls for each object type:
 
 ```yaml
 objects:
   properties:    # matches /properties, /properties/{propertyId}
-    filters:
-      - target: 'ownerFirstName'
-        filterType: REDACT
-      - target: 'ownerLastName'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [ownerFirstName, ownerLastName]
   inspections:   # matches .../inspections, .../inspections/{inspectionId}
-    filters:
-      - target: 'inspectorFirstName'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [inspectorFirstName]
   issues:        # matches .../issues, .../issues/{issueId}
-    filters:
-      - target: 'title'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [title]
 ```
 
 ### URL Matching
@@ -54,8 +52,8 @@ For a request to `/properties/{propertyId}/inspections/{inspectionId}/issues`, t
 3. Applies the deepest match — in this case, `issues`
 
 This works for both collections and single resources:
-- `/properties/{propertyId}/inspections/{inspectionId}/issues` → applies `issues` filters to the list
-- `/properties/{propertyId}/inspections/{inspectionId}/issues/{issueId}` → applies `issues` filters to that single object
+- `/properties/{propertyId}/inspections/{inspectionId}/issues` → applies `issues` controls to the list
+- `/properties/{propertyId}/inspections/{inspectionId}/issues/{issueId}` → applies `issues` controls to that single object
 
 ### The _default Object
 
@@ -64,16 +62,16 @@ This works for both collections and single resources:
 ```yaml
 objects:
   properties:
-    filters:
-      - target: 'ownerName'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [ownerName]
   _default:
-    filters:
-      - target: 'createdBy'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [createdBy]
 ```
 
-When a request matches an undefined object, `_default` filters apply. When a request matches a named object, filters merge — the named object's filters take precedence on conflicts, and `_default` fills in the rest.
+When a request matches an undefined object, `_default` controls apply. When a request matches a named object, controls merge — the named object's controls take precedence on conflicts, and `_default` fills in the rest.
 
 ## Control Blocks
 

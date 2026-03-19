@@ -11,38 +11,53 @@ icon: shield
 
 Field-level privacy controls that protect sensitive data without requiring engineering effort. Configure once, apply everywhere.
 
+<Info>
+  Controls are an ordered pipeline that can include both privacy filters and [data transforms](/control-blocks/data-transform). You don't need transforms — you can use filter controls on their own. This page covers privacy filter controls.
+</Info>
+
 ## Object Definitions
 
-Data controls are defined per object type in your Virtual API spec. The `objects` key maps resource names to their filter configurations.
+Data controls are defined per object type in your Virtual API spec. The `objects` key maps resource names to their control configurations.
 
 Given an API with these endpoints:
 - `/properties` — list of properties
 - `/properties/{propertyId}/inspections` — inspections for a property
 - `/properties/{propertyId}/inspections/{inspectionId}/issues` — issues for an inspection
 
-The spec defines filters for each object type:
+The spec defines controls for each object type:
 
 ```yaml
 objects:
   properties:    # matches /properties, /properties/{propertyId}
-    filters:
-      - target: 'ownerFirstName'
-        filterType: REDACT
-      - target: 'ownerLastName'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [ownerFirstName, ownerLastName]
   inspections:   # matches .../inspections, .../inspections/{inspectionId}
-    filters:
-      - target: 'inspectorFirstName'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [inspectorFirstName]
   issues:        # matches .../issues, .../issues/{issueId}
-    filters:
-      - target: 'title'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [title]
 ```
 
-Each filter has two required fields:
-- `target` — the field name to apply the filter to
-- `filterType` — the operation (REDACT, TOKENIZE, TOKENIZE_ANONYMOUS, MASK, HASH, ALLOW)
+Each control has two required properties:
+- `type` — the operation to apply (`redact`, `tokenize`, `anonymize`, `mask`, `hash`, `allow`)
+- `fields` — one or more field names to apply it to
+
+<Tip>
+  You'll see `fields` written two ways in our examples — both are valid YAML and produce identical results:
+  ```yaml
+  # Inline style
+  fields: [first_name, last_name]
+
+  # Multi-line style
+  fields:
+    - first_name
+    - last_name
+  ```
+</Tip>
 
 ### The _default Object
 
@@ -51,38 +66,32 @@ Each filter has two required fields:
 ```yaml
 objects:
   properties:
-    filters:
-      - target: 'ownerName'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [ownerName]
   _default:
-    filters:
-      - target: 'createdBy'
-        filterType: REDACT
-      - target: 'modifiedBy'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [createdBy, modifiedBy]
 ```
 
 **Precedence rules:**
 
 | Scenario | Behavior |
 |----------|----------|
-| Request matches undefined object | `_default` filters apply |
-| Request matches named object | Filters merge. If the same `target` appears in both, the named object wins. Other `_default` filters still apply. |
+| Request matches undefined object | `_default` controls apply |
+| Request matches named object | Controls merge. If the same field appears in both, the named object wins. Other `_default` controls still apply. |
 
-## Filter Types
+## Control Types
 
 ### Redact
 
 Remove sensitive data entirely. Strings become empty, numbers become zero.
 
 ```yaml
-filters:
-  - target: 'ssn'
-    filterType: REDACT
-  - target: 'date_of_birth'
-    filterType: REDACT
-  - target: 'drivers_license'
-    filterType: REDACT
+controls:
+  - type: redact
+    fields: [ssn, date_of_birth, drivers_license]
 ```
 
 **Input:**
@@ -100,11 +109,9 @@ filters:
 Replace sensitive values with consistent, syntax-preserving tokens. Same input always produces the same token — enabling analytics without exposing raw data.
 
 ```yaml
-filters:
-  - target: 'email'
-    filterType: TOKENIZE
-  - target: 'phone'
-    filterType: TOKENIZE
+controls:
+  - type: tokenize
+    fields: [email, phone]
 ```
 
 **Input:**
@@ -119,16 +126,14 @@ filters:
 
 Tokenization is **deterministic per Virtual API** — the same input value always produces the same token within that Virtual API. Different Virtual APIs produce different tokens for the same input.
 
-### Tokenize Anonymous
+### Anonymize
 
 Generate randomized replacements that preserve data structure. Each call produces a different value, making re-identification impossible.
 
 ```yaml
-filters:
-  - target: 'email'
-    filterType: TOKENIZE_ANONYMOUS
-  - target: 'name'
-    filterType: TOKENIZE_ANONYMOUS
+controls:
+  - type: anonymize
+    fields: [email, name]
 ```
 
 **Input:**
@@ -151,11 +156,9 @@ filters:
 Partially redact values while preserving enough structure for context. Useful in support, debugging, and audit log scenarios where you need to understand the data shape without revealing full values.
 
 ```yaml
-filters:
-  - target: 'ssn'
-    filterType: MASK
-  - target: 'phone'
-    filterType: MASK
+controls:
+  - type: mask
+    fields: [ssn, phone]
 ```
 
 **Input:**
@@ -182,11 +185,9 @@ Masking behavior varies by data type:
 Replace values with a one-way SHA-256 digest. Consumers can correlate and deduplicate records across datasets without seeing real values — the same input within the same Virtual API always produces the same hash.
 
 ```yaml
-filters:
-  - target: 'email'
-    filterType: HASH
-  - target: 'customerId'
-    filterType: HASH
+controls:
+  - type: hash
+    fields: [email, customerId]
 ```
 
 **Input:**
@@ -214,12 +215,12 @@ Hash behavior varies by data type:
 
 ### Allow
 
-Pass data through unchanged. Useful when you want to be explicit about which fields are permitted, or to override a `_default` filter for specific objects.
+Pass data through unchanged. Useful when you want to be explicit about which fields are permitted, or to override a `_default` control for specific objects.
 
 ```yaml
-filters:
-  - target: 'publicName'
-    filterType: ALLOW
+controls:
+  - type: allow
+    fields: [publicName]
 ```
 
 **Input:**
@@ -237,59 +238,51 @@ filters:
 Use dot notation to target nested fields:
 
 ```yaml
-filters:
-  - target: 'user.ssn'
-    filterType: REDACT
-  - target: 'user.address.street'
-    filterType: REDACT
-  - target: 'billing.card_number'
-    filterType: REDACT
+controls:
+  - type: redact
+    fields: [user.ssn, user.address.street, billing.card_number]
 ```
 
 ## Targeting Arrays
 
-Apply filters to all items in an array:
+Apply controls to all items in an array:
 
 ```yaml
-filters:
-  - target: '[contacts].email'
-    filterType: TOKENIZE
-  - target: '[contacts].phone'
-    filterType: TOKENIZE
+controls:
+  - type: tokenize
+    fields: ["[contacts].email", "[contacts].phone"]
 ```
 
-## Combining Filters
+## Combining Controls
 
-Apply multiple filter types within an object definition:
+Apply multiple control types within an object definition:
 
 ```yaml
 objects:
   customers:
-    filters:
-      - target: 'ssn'
-        filterType: REDACT
-      - target: 'date_of_birth'
-        filterType: REDACT
-      - target: 'email'
-        filterType: TOKENIZE
-      - target: 'phone'
-        filterType: MASK
-      - target: 'name'
-        filterType: TOKENIZE_ANONYMOUS
-      - target: 'customerId'
-        filterType: HASH
+    controls:
+      - type: redact
+        fields: [ssn, date_of_birth]
+      - type: tokenize
+        fields: [email]
+      - type: mask
+        fields: [phone]
+      - type: anonymize
+        fields: [name]
+      - type: hash
+        fields: [customerId]
 ```
 
 ## When to Use Each
 
-| Filter Type | Use case |
-|-------------|----------|
-| **REDACT** | Data that should never leave your system (SSN, credentials) |
-| **TOKENIZE** | Identifiers needed for correlation/analytics without exposure |
-| **TOKENIZE_ANONYMOUS** | Data for ML training, testing, or demos |
-| **MASK** | Support/debugging contexts where partial visibility is needed |
-| **HASH** | Correlation and deduplication without exposing original values |
-| **ALLOW** | Explicitly permit fields, or override `_default` filters |
+| Control Type | Use case |
+|--------------|----------|
+| **redact** | Data that should never leave your system (SSN, credentials) |
+| **tokenize** | Identifiers needed for correlation/analytics without exposure |
+| **anonymize** | Data for ML training, testing, or demos |
+| **mask** | Support/debugging contexts where partial visibility is needed |
+| **hash** | Correlation and deduplication without exposing original values |
+| **allow** | Explicitly permit fields, or override `_default` controls |
 
 ## Next steps
 

@@ -16,6 +16,19 @@ tag: Preview
 
 Real-time field transformations applied at the data boundary. No ETL pipelines or data duplication required.
 
+<Tip>
+  You'll see `fields` written two ways in our examples — both are valid YAML and produce identical results:
+  ```yaml
+  # Inline style
+  fields: [first_name, last_name]
+
+  # Multi-line style
+  fields:
+    - first_name
+    - last_name
+  ```
+</Tip>
+
 ## Operations
 
 ### Combine
@@ -66,6 +79,10 @@ controls:
 ```
 
 ## Combining with privacy controls
+
+<Warning>
+  Controls execute top-to-bottom. If a filter control (like `hash` or `redact`) runs **before** a transform that references the same field, the transform will see the already-modified value. Place transforms before filters when both operate on the same fields.
+</Warning>
 
 Apply transformations before or after privacy controls:
 

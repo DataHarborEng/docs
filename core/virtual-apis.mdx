@@ -12,7 +12,7 @@ A Virtual API is a governed view of an existing dataset. Instead of cloning data
 ## How it works
 
 1. **Enroll** your data source (REST API today, data lakes coming soon)
-2. **Define** your spec — object definitions, filters, and access controls
+2. **Define** your spec — object definitions, controls, and access rules
 3. **Publish** — your Virtual API is instantly available
 4. **Monitor** — observe usage and schema changes over time
 
@@ -23,13 +23,11 @@ A Virtual API spec defines which fields to protect, organized by the API objects
 ```yaml
 objects:
   customers:
-    filters:
-      - target: 'ssn'
-        filterType: REDACT
-      - target: 'date_of_birth'
-        filterType: REDACT
-      - target: 'email'
-        filterType: TOKENIZE_ANONYMOUS
+    controls:
+      - type: redact
+        fields: [ssn, date_of_birth]
+      - type: anonymize
+        fields: [email]
 ```
 
 This spec redacts `ssn` and `date_of_birth` and anonymizes `email` for any request matching the `customers` route — such as `/api/customers` or `/api/customers/456`.
@@ -41,13 +39,13 @@ Each key under `objects` is a named object definition that matches against URL p
 ```yaml
 objects:
   addresses:
-    filters:
-      - target: 'name'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [name]
   users:
-    filters:
-      - target: 'metadata.tag'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [metadata.tag]
 ```
 
 | Request path | Matched object |
@@ -63,13 +61,9 @@ Target nested fields using dot notation, and array items using `[arrayName]` syn
 ```yaml
 objects:
   orders:
-    filters:
-      - target: 'name'
-        filterType: REDACT
-      - target: '[addresses].name'
-        filterType: REDACT
-      - target: '[addresses].city'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [name, '[addresses].name', '[addresses].city']
 ```
 
 This redacts the top-level `name`, plus the `name` and `city` fields inside every item in the `addresses` array — all within a single object definition.
@@ -77,52 +71,44 @@ This redacts the top-level `name`, plus the `name` and `city` fields inside ever
 For nested objects, use dot notation:
 
 ```yaml
-filters:
-  - target: 'metadata.tag'
-    filterType: REDACT
-  - target: 'metadata.viewCount'
-    filterType: REDACT
+controls:
+  - type: redact
+    fields: [metadata.tag, metadata.viewCount]
 ```
 
 ## Multiple views from one source
 
-One enrolled API can power many governed views, each with different filter configurations:
+One enrolled API can power many governed views, each with different control configurations:
 
 ```yaml
 # Partner View — redact identifiers
 objects:
   customers:
-    filters:
-      - target: 'ssn'
-        filterType: REDACT
-      - target: 'date_of_birth'
-        filterType: REDACT
-      - target: 'email'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [ssn, date_of_birth, email]
 ```
 
 ```yaml
 # Analytics View — tokenize for correlation
 objects:
   customers:
-    filters:
-      - target: 'email'
-        filterType: TOKENIZE
-      - target: 'phone'
-        filterType: TOKENIZE
-      - target: 'ssn'
-        filterType: REDACT
+    controls:
+      - type: tokenize
+        fields: [email, phone]
+      - type: redact
+        fields: [ssn]
 ```
 
 ```yaml
 # AI Training View — anonymize for model training
 objects:
   customers:
-    filters:
-      - target: '[addresses].name'
-        filterType: REDACT
-      - target: 'metadata.viewCount'
-        filterType: TOKENIZE_ANONYMOUS
+    controls:
+      - type: redact
+        fields: ['[addresses].name']
+      - type: anonymize
+        fields: [metadata.viewCount]
 ```
 
 No duplicated data. No cloned APIs.
@@ -134,16 +120,16 @@ No duplicated data. No cloned APIs.
 ```yaml
 objects:
   addresses:
-    filters:
-      - target: 'name'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [name]
   _default:
-    filters:
-      - target: 'description'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [description]
 ```
 
-**Precedence:** When a request matches a named object (e.g., `addresses`), only that object's filters apply. When no named object matches, `_default` filters apply.
+**Precedence:** When a request matches a named object (e.g., `addresses`), only that object's controls apply. When no named object matches, `_default` controls apply.
 
 ## Spec options
 
@@ -156,9 +142,9 @@ objects:
 failOnUnmatchedObject: true
 objects:
   addresses:
-    filters:
-      - target: 'name'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [name]
 ```
 
 ## Versioning

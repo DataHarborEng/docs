@@ -67,17 +67,17 @@ DataHarbor extracts three object names: `properties`, `inspections`, and `issues
 ```yaml
 objects:
   properties:
-    filters:
-      - target: 'ownerFirstName'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [ownerFirstName]
   inspections:
-    filters:
-      - target: 'inspectorName'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [inspectorName]
   issues:
-    filters:
-      - target: 'title'
-        filterType: REDACT
+    controls:
+      - type: redact
+        fields: [title]
 ```
 
 ## Authentication

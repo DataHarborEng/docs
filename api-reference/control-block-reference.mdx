@@ -83,6 +83,71 @@ Replace with random values preserving structure.
 
 ---
 
+### mask
+
+Partially redact values while preserving structure.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `type` | string | Yes | Must be `mask` |
+| `fields` | array | Yes | Field paths to mask |
+
+**Behavior:**
+- Strings → first and last characters visible, middle masked (e.g., `"John Smith"` → `"Jo** ***th"`)
+- Numbers → leading digits zeroed, last 2 visible (e.g., `5551234567` → `0000000067`)
+- Booleans → `false`
+
+```yaml
+- type: mask
+  fields:
+    - ssn
+    - phone
+    - name
+```
+
+---
+
+### hash
+
+Replace with one-way SHA-256 digest. Deterministic within a Virtual API — same input always produces the same hash.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `type` | string | Yes | Must be `hash` |
+| `fields` | array | Yes | Field paths to hash |
+
+**Behavior:**
+- Strings → 64-character hex digest
+- Numbers → deterministic number derived from hash bytes
+- Booleans → deterministic boolean
+
+```yaml
+- type: hash
+  fields:
+    - email
+    - customer_id
+```
+
+---
+
+### allow
+
+Pass values through unchanged. Fields not referenced by any control are allowed by default — `allow` is provided for users who prefer to be explicit about which fields are permitted.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `type` | string | Yes | Must be `allow` |
+| `fields` | array | Yes | Field paths to allow |
+
+```yaml
+- type: allow
+  fields:
+    - public_id
+    - display_name
+```
+
+---
+
 ## Data Transform
 
 ### combine
@@ -94,7 +159,7 @@ Merge fields into a new field.
 | `type` | string | Yes | Must be `combine` |
 | `fields` | array | Yes | Fields to combine (order matters) |
 | `into` | string | Yes | Name of new field |
-| `separator` | string | No | Separator between values. Default: `" "` |
+| `separator` | string | No | Separator between values. Default: `""` |
 | `remove_source` | boolean | No | Remove original fields. Default: `false` |
 
 ```yaml
@@ -217,14 +282,8 @@ fields:
 
 ```yaml
 fields:
-  - contacts[].email        # All items in array
-  - orders[].items[].sku    # Nested arrays
+  - "[contacts].email"        # All items in array
+  - "[orders].[items].sku"    # Nested arrays
 ```
 
-### Wildcards
 
-```yaml
-fields:
-  - "*.email"               # email field at any path
-  - "user.*.phone"          # phone in any user sub-object
-```

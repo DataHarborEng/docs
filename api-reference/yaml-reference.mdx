@@ -80,7 +80,7 @@ source:
   fields:
     - field_name
     - nested.field
-    - array[].field
+    - [array].field
 ```
 
 ### Tokenize
@@ -107,7 +107,7 @@ source:
     - first_field
     - second_field
   into: new_field_name
-  separator: string         # Default: " "
+  separator: string         # Default: ""
   remove_source: boolean    # Default: false
 ```
 
