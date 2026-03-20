@@ -23,108 +23,51 @@ Proactive AI-assisted remediation. When risky data patterns appear, DataHarbor c
 3. **Apply** — Optionally auto-apply with human-in-the-loop approval
 4. **Verify** — Confirm the fix resolves the issue
 
-## Remediation modes
+## Remediation policy
 
-### Manual (default)
-
-Receive alerts, apply fixes yourself:
+Define how DataHarbor responds to newly detected fields based on risk level. Remediation rules live alongside your controls in the Virtual API spec:
 
 ```yaml
-remediation:
-  mode: manual
-  # You receive alerts; you apply controls
+objects:
+  customers:
+    controls:
+      - type: redact
+        fields: [ssn, date_of_birth]
+      - type: tokenize
+        fields: [email, phone]
+
+    remediation:
+      high:                        # SSN, credit card, passport patterns
+        action: redact
+        alert: true
+      medium:                      # Email, phone, address patterns
+        action: redact
+      low:                         # Unknown fields with weak PII signal
 ```
 
-### Suggested
+When Schema Analytics detects a new field, DataHarbor classifies it by risk level and applies the matching remediation rule. High-risk fields like credit card numbers are redacted and trigger an alert for review. Medium-risk fields are quietly redacted. Low-risk fields are left alone.
 
-DataHarbor suggests fixes with one-click apply:
+## Remediation actions
 
-```json
-{
-  "alert": "uncovered_sensitive_field",
-  "field": "social_security_number",
-  "suggested_remediation": {
-    "control": "redact",
-    "confidence": 0.98
-  },
-  "actions": {
-    "apply": "POST /v1/remediations/rem_123/apply",
-    "dismiss": "POST /v1/remediations/rem_123/dismiss"
-  }
-}
-```
-
-### Auto-protect
-
-Automatically apply controls to high-confidence risks, notify for review:
-
-```yaml
-remediation:
-  mode: auto_protect
-  threshold: 0.95  # Only auto-apply when confidence >= 95%
-  notify: always
-```
-
-When auto-protect triggers:
-
-```json
-{
-  "event": "auto_remediation_applied",
-  "field": "credit_card_number",
-  "control_applied": "redact",
-  "confidence": 0.99,
-  "status": "pending_review",
-  "review_url": "https://app.dataharbor.dev/remediations/rem_456"
-}
-```
-
-## Remediation types
-
-| Risk | Suggested remediation |
-|------|----------------------|
-| SSN, credit card, passport | Redact |
-| Email, phone (analytics use) | Tokenize |
-| Email, phone (demo use) | Anonymize |
-| Name + DOB + ZIP (combo risk) | Generalize ZIP to 3-digit |
-| New unknown PII field | Hold for review |
+| Action | Behavior |
+|--------|----------|
+| `redact` | Immediately redact the field on all future requests |
+| `tokenize` | Replace with a deterministic token |
+| `mask` | Partially redact, preserving structure |
+| `none` | Take no action — leave the field as-is |
 
 ## Human-in-the-loop
 
-Even in auto-protect mode, you maintain control:
+Even when remediation is automatic, you maintain control:
 
-- **Review queue**: All auto-applied remediations appear for review
-- **Undo**: Revert any auto-applied control within 24 hours
-- **Tune**: Adjust confidence thresholds per field type
-- **Exclude**: Mark specific fields as "known safe"
-
-```yaml
-remediation:
-  mode: auto_protect
-  threshold: 0.95
-  
-  exclusions:
-    - field: internal_reference_id
-      reason: "Not PII, just looks like one"
-```
+- **Review queue** — All auto-applied remediations appear for review
+- **Undo** — Revert any auto-applied control
+- **Tune** — Adjust risk classifications per field
+- **Exclude** — Mark specific fields as "known safe" so they're never auto-remediated
 
 ## Audit trail
 
-Every remediation is logged:
-
-```json
-{
-  "remediation_id": "rem_789",
-  "timestamp": "2025-01-15T10:30:00Z",
-  "virtual_api": "partner-view",
-  "field": "account_number",
-  "risk_detected": "uncovered_sensitive_field",
-  "action": "auto_redact",
-  "confidence": 0.97,
-  "reviewed_by": "jane@yourcompany.com",
-  "reviewed_at": "2025-01-15T14:22:00Z",
-  "review_decision": "approved"
-}
-```
+Every remediation — whether automatic or manual — is logged with the field name, risk classification, action taken, and who reviewed it.
 
 ## Next steps
 

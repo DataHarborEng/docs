@@ -1,9 +1,9 @@
 ---
-title: Agent Visibility
+title: Virtual API Visibility
 description: Control how your Virtual APIs are discovered and accessed by AI agents through the agent card system.
 ---
 
-# Agent Visibility
+# Virtual API Visibility
 
 **From private to fully public — one setting.**
 
@@ -80,6 +80,13 @@ For **Private** visibility, unauthenticated requests receive a stub card:
 Authenticated requests receive the full card with skills, parameters, and the extended card URL.
 
 For **Unlisted Open** and **Listed Open**, all requests receive the full card — no security schemes are included, and the extended card endpoint is not served.
+
+## Registry
+
+Virtual APIs with **Listed Open** visibility are indexed in the DataHarbor registry and discoverable by both humans and machines:
+
+- **Registry catalog**: [https://service.dataharbor.co/registry](https://service.dataharbor.co/registry)
+- **OpenAPI spec** (with query information): [https://service.dataharbor.co/openapi/v1.json](https://service.dataharbor.co/openapi/v1.json)
 
 ## Choosing a visibility level
 

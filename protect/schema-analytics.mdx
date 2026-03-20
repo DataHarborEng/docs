@@ -13,58 +13,22 @@ Continuous monitoring of your data's shape. DataHarbor learns schema over time a
 
 As Virtual APIs are used, DataHarbor:
 1. **Learns** schema shape over time
-2. **Detects** net-new fields as they appear
+2. **Detects** schema drift as new fields appear
 3. **Flags** uncovered keys that may contain sensitive data
 4. **Identifies** risky combinations that enable re-identification
 5. **Surfaces** compliance violations
 
-## Net-new field detection
+## Schema drift detection
 
-When your upstream API adds new fields, DataHarbor notices:
-
-```json
-{
-  "alert": "new_field_detected",
-  "virtual_api": "partner-view",
-  "field": "emergency_contact_phone",
-  "first_seen": "2025-01-15T10:30:00Z",
-  "sample_value_type": "string",
-  "suggested_action": "review_for_pii"
-}
-```
-
-New fields are **not automatically protected**. You receive an alert to review and apply appropriate controls.
+When your upstream API adds new fields, DataHarbor notices. New fields are **not automatically protected** — you receive an alert to review and apply appropriate controls.
 
 ## Uncovered key detection
 
-DataHarbor flags fields that may contain sensitive data but have no controls applied:
-
-```json
-{
-  "alert": "uncovered_sensitive_field",
-  "virtual_api": "partner-view",
-  "field": "drivers_license",
-  "confidence": 0.92,
-  "reason": "Field name matches known PII pattern",
-  "suggested_control": "redact"
-}
-```
+DataHarbor flags fields that may contain sensitive data but have no controls applied.
 
 ## Risky combination detection
 
-Some field combinations enable re-identification even when individual fields seem safe:
-
-```json
-{
-  "alert": "risky_combination",
-  "virtual_api": "analytics-view",
-  "fields": ["zip_code", "date_of_birth", "gender"],
-  "risk": "high",
-  "reason": "Combination can identify 87% of US population",
-  "reference": "Sweeney 2000",
-  "suggested_action": "anonymize_or_generalize"
-}
-```
+Some field combinations enable re-identification even when individual fields seem safe. DataHarbor identifies these patterns — for example, the combination of zip code, date of birth, and gender can identify 87% of the US population.
 
 ## Compliance detection
 
@@ -76,17 +40,6 @@ Automatic detection of potential compliance violations:
 | CCPA | California resident PII without disclosure |
 | HIPAA | PHI fields without BAA coverage |
 
-```json
-{
-  "alert": "compliance_risk",
-  "virtual_api": "partner-view",
-  "regulation": "GDPR",
-  "article": "4(1)",
-  "issue": "email field exposed to non-EU processor",
-  "suggested_action": "apply_tokenization_or_consent"
-}
-```
-
 ## Dashboard view
 
 The Schema Analytics dashboard shows:
@@ -95,23 +48,6 @@ The Schema Analytics dashboard shows:
 - **Risk score**: Aggregate risk based on uncovered and risky fields
 - **Field inventory**: Complete list of observed fields with control status
 - **Alert history**: Timeline of detected issues
-
-## Configuring alerts
-
-```yaml
-monitoring:
-  alerts:
-    new_fields: true
-    uncovered_sensitive: true
-    risky_combinations: true
-    compliance_violations: true
-  
-  notifications:
-    email:
-      - security@yourcompany.com
-    webhook:
-      url: https://yourcompany.com/webhooks/dataharbor
-```
 
 ## Next steps
 

@@ -7,7 +7,7 @@ description: Turn any Virtual API into a governed MCP endpoint for AI agent cons
 
 **Governed AI data access. No separate security model.**
 
-Turn any Virtual API into a governed MCP (Model Context Protocol) endpoint for AI agent consumption. OAuth credentials and a URL — that's all you need to connect Claude, ChatGPT, or any MCP client.
+Turn any Virtual API into a governed MCP (Model Context Protocol) endpoint for AI agent consumption. A single URL — that's all you need to connect Claude, ChatGPT, or any MCP client.
 
 ## How it works
 
@@ -18,33 +18,15 @@ AI agents inherit the same controls as any other consumer:
 
 No separate security model for AI.
 
-```yaml
-virtual_api:
-  name: ai-customer-view
-  source: customer-api
+## MCP endpoint
 
-  controls:
-    - type: tokenize
-      fields: [email, phone]
-    - type: redact
-      fields: [ssn]
+Every Virtual API with MCP delivery enabled gets an MCP URL:
 
-  delivery:
-    type: mcp
-    oauth:
-      enabled: true
+```
+https://service.dataharbor.co/{leaseId}/mcp
 ```
 
-## Authentication
-
-MCP delivery uses OAuth 2.0:
-
-```bash
-# Get OAuth credentials from the dashboard
-Client ID: dh_mcp_client_abc123
-Client Secret: dh_mcp_secret_xyz789
-Token URL: https://auth.dataharbor.dev/oauth/token
-```
+Point any MCP client at this URL — authentication is handled automatically via OAuth discovery.
 
 ### Connect from Claude Desktop
 
@@ -54,12 +36,7 @@ Add to your Claude Desktop configuration:
 {
   "mcpServers": {
     "dataharbor-customers": {
-      "url": "https://mcp.dataharbor.dev/v1/ai-customer-view",
-      "oauth": {
-        "clientId": "dh_mcp_client_abc123",
-        "clientSecret": "dh_mcp_secret_xyz789",
-        "tokenUrl": "https://auth.dataharbor.dev/oauth/token"
-      }
+      "url": "https://service.dataharbor.co/9b745364-f019-4c57-a044-31860b0c12cf/mcp"
     }
   }
 }

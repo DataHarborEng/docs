@@ -23,7 +23,7 @@ virtual_api:
   
   delivery:
     type: rest
-    # Endpoint: https://harbor.dataharbor.dev/v1/partner-view
+    # Endpoint: https://service.dataharbor.co/v1/partner-view
 ```
 
 ## Authentication
@@ -32,7 +32,7 @@ All requests require an API key in the `Authorization` header:
 
 ```bash
 curl -H "Authorization: Bearer dh_live_abc123..." \
-  https://harbor.dataharbor.dev/v1/partner-view/customers
+  https://service.dataharbor.co/v1/partner-view/customers
 ```
 
 ## API key management
@@ -105,7 +105,7 @@ Every request passes through the governance layer:
 
 ```javascript
 const response = await fetch(
-  'https://harbor.dataharbor.dev/v1/partner-view/customers',
+  'https://service.dataharbor.co/v1/partner-view/customers',
   {
     headers: {
       'Authorization': 'Bearer dh_live_abc123...',

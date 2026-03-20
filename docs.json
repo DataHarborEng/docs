@@ -34,7 +34,8 @@
             "pages": [
               "core/virtual-apis",
               "core/enrolling-data-sources",
-              "core/agents"
+              "core/agents",
+              "core/api-access"
             ]
           },
           {

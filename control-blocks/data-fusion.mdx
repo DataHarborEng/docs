@@ -24,9 +24,9 @@ Reference another Virtual API and combine data into a unified meta response. Eac
 objects:
   enriched_customers:
     fuse:
-      - source: crm-api
+      - source: crm-api           # Virtual API name
         object: customers
-      - source: analytics-lake
+      - source: analytics-lake    # Virtual API name
         object: customer_metrics
     joinOn: customer_id
 ```

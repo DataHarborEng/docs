@@ -32,6 +32,45 @@ objects:
 
 This spec redacts `ssn` and `date_of_birth` and anonymizes `email` for any request matching the `customers` route — such as `/api/customers` or `/api/customers/456`.
 
+<Tip>
+  You'll see `fields` written two ways in our examples — both are valid YAML and produce identical results:
+  ```yaml
+  # Inline style
+  fields: [first_name, last_name]
+
+  # Multi-line style
+  fields:
+    - first_name
+    - last_name
+  ```
+</Tip>
+
+## Controls are a pipeline
+
+Controls execute **top-to-bottom** as an ordered pipeline. This means you can create a field with a [transform](/control-blocks/data-transform) and then apply a privacy control to it in a later step:
+
+```yaml
+objects:
+  customers:
+    controls:
+      # Step 1: Combine name fields into a single field
+      - type: combine
+        fields: [first_name, last_name]
+        into: full_name
+        separator: " "
+        remove_source: true
+
+      # Step 2: Hash the combined name
+      - type: hash
+        fields: [full_name]
+
+      # Step 3: Redact email
+      - type: redact
+        fields: [email]
+```
+
+In this example, `full_name` is created by the combine, then hashed — and the original `first_name` and `last_name` fields are removed. Order matters: each control sees the result of the controls above it.
+
 ## Object definitions and route matching
 
 Each key under `objects` is a named object definition that matches against URL path segments. DataHarbor matches the object name to the last (or second-to-last) segment of the request path.
