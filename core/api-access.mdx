@@ -11,7 +11,7 @@ Every Virtual API is accessible over REST. How consumers connect depends on the 
 
 | Visibility | Endpoint | Auth | Registry |
 |---|---|---|---|
-| **Disabled** / **Private** | `/fetch/{leaseId}` | API key required | No |
+| **Disabled** / **Private** | `/fetch/{leaseId}/{path}` | API key required | No |
 | **Unlisted Open** | `/relay/{leaseId}/{path}` | None | No |
 | **Listed Open** | `/relay/{leaseId}/{path}` | None | Yes — discoverable in catalog |
 
@@ -20,13 +20,13 @@ Every Virtual API is accessible over REST. How consumers connect depends on the 
 Virtual APIs with **Disabled** or **Private** visibility use the fetch endpoint with an API key:
 
 ```
-https://service.dataharbor.co/fetch/{leaseId}
+https://service.dataharbor.co/fetch/{leaseId}/{path}
 ```
 
-Include the `x-haven-api-key` header — you can find your API key in the Virtual API dashboard.
+Include the `dataharbor-api-key` header — you can find your API key in the Virtual API dashboard.
 
 ```bash
-curl -H "x-haven-api-key: YOUR_API_KEY" \
+curl -H "dataharbor-api-key: YOUR_API_KEY" \
   https://service.dataharbor.co/fetch/b097a4d3-44e6-4490-9f03-104f4d636e20
 ```
 
@@ -47,6 +47,10 @@ curl https://service.dataharbor.co/relay/166d4e26-3d40-4e44-806a-e56b93ebb121/pr
 # Get a specific property's issues
 curl https://service.dataharbor.co/relay/166d4e26-3d40-4e44-806a-e56b93ebb121/properties/1/issues
 ```
+
+<Tip>
+  The fetch endpoint also works for **Unlisted Open** and **Listed Open** Virtual APIs — useful when you want authenticated access even on a publicly visible API.
+</Tip>
 
 **Unlisted Open** is ideal for sharing with specific partners — they need the URL, but no credentials. **Listed Open** goes further: your Virtual API appears in the DataHarbor registry and catalog, making it fully discoverable.
 
