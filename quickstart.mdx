@@ -24,30 +24,22 @@ source:
 
 ## 2. Define a Virtual API
 
-Create a governed view with privacy controls applied.
+Create the v0.3 Virtual API Configuration that governs the routes you want to expose.
 
 ```yaml
-virtual_api:
-  name: partner-customer-view
-  source: customer-api
-  endpoint: /customers
+version: "0.3"
+objects:
+  customers:
+    controls:
+      - type: redact
+        fields:
+          - ssn
+          - date_of_birth
 
-  controls:
-    - type: redact
-      fields:
-        - ssn
-        - date_of_birth
-
-    - type: tokenize
-      fields:
-        - email
-        - phone
-
-  access:
-    expires: 2025-12-31
-    geo_allow:
-      - US
-      - EU
+      - type: tokenize
+        fields:
+          - email
+          - phone
 ```
 
 ## 3. Publish and consume

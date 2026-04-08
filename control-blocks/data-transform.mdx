@@ -24,6 +24,10 @@ Real-time field transformations applied at the data boundary. No ETL pipelines o
   ```
 </Tip>
 
+<Info>
+  For a complete control-block spec, start with `version: "0.3"` and define controls under `objects.<objectName>.controls`. Snippets below that start with `controls:` are fragments meant to live inside an object definition.
+</Info>
+
 ## Operations
 
 ### Combine
@@ -73,6 +77,28 @@ controls:
 { "mobile_phone": "", "home_phone": "555-1234", "primary_phone": "555-1234" }
 ```
 
+## Execution Rules
+
+- Controls execute top-to-bottom. A later control can use a field created by an earlier control.
+- `fields` order matters for both `combine` and `coalesce`.
+- All `fields` and `into` must share the same parent path when you use nested paths. For example, `address.city`, `address.state`, and `address.location` are valid together.
+- `into` must point to a new field. If the target field already exists, the transform fails instead of overwriting it.
+- Set `required: true` when missing inputs should fail the request. For `coalesce`, missing, `null`, and empty-string values are treated as empty.
+- `remove_source: true` works for both `combine` and `coalesce`.
+- If the matched payload is an array, transforms run against each matching object element while preserving top-to-bottom control order.
+
+## Nested Paths
+
+Use nested paths when all source fields and the destination share the same parent:
+
+```yaml
+controls:
+  - type: combine
+    fields: [address.city, address.state]
+    into: address.location
+    separator: ", "
+```
+
 ## Combining with privacy controls
 
 <Warning>
@@ -103,7 +129,7 @@ controls:
 
 ## Removing original fields
 
-Optionally remove source fields after transformation:
+Optionally remove source fields after transformation. This works on both `combine` and `coalesce`:
 
 ```yaml
 controls:

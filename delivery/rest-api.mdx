@@ -16,15 +16,7 @@ When you publish a Virtual API, DataHarbor automatically provisions:
 - An API key for authentication
 - Usage analytics
 
-```yaml
-virtual_api:
-  name: partner-view
-  source: customer-api
-  
-  delivery:
-    type: rest
-    # Endpoint: https://service.dataharbor.co/v1/partner-view
-```
+REST delivery sits on top of your existing governed Virtual API Configuration. Once published, DataHarbor provisions an endpoint like `https://service.dataharbor.co/v1/partner-view` automatically.
 
 ## Authentication
 

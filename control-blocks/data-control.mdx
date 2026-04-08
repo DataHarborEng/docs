@@ -15,6 +15,10 @@ Field-level privacy controls that protect sensitive data without requiring engin
   Controls are an ordered pipeline that can include both privacy filters and [data transforms](/control-blocks/data-transform). You don't need transforms — you can use filter controls on their own. This page covers privacy filter controls.
 </Info>
 
+<Tip>
+  For a complete control-block spec, start with `version: "0.3"` and define controls under `objects.<objectName>.controls`. Snippets below that start with `controls:` are fragments meant to live inside an object definition.
+</Tip>
+
 ## Object Definitions
 
 Data controls are defined per object type in your Virtual API spec. The `objects` key maps resource names to their control configurations.
@@ -27,6 +31,7 @@ Given an API with these endpoints:
 The spec defines controls for each object type:
 
 ```yaml
+version: "0.3"
 objects:
   properties:    # matches /properties, /properties/{propertyId}
     controls:
@@ -46,6 +51,8 @@ Each control has two required properties:
 - `type` — the operation to apply (`redact`, `tokenize`, `anonymize`, `mask`, `hash`, `allow`)
 - `fields` — one or more field names to apply it to
 
+You can also add `required: true` when a missing field should fail the request instead of being skipped.
+
 <Tip>
   You'll see `fields` written two ways in our examples — both are valid YAML and produce identical results:
   ```yaml
@@ -64,6 +71,7 @@ Each control has two required properties:
 `_default` is an optional catch-all for objects not explicitly defined.
 
 ```yaml
+version: "0.3"
 objects:
   properties:
     controls:
@@ -80,7 +88,7 @@ objects:
 | Scenario | Behavior |
 |----------|----------|
 | Request matches undefined object | `_default` controls apply |
-| Request matches named object | Controls merge. If the same field appears in both, the named object wins. Other `_default` controls still apply. |
+| Request matches named object | Only the named object's controls apply. `_default` is not merged. |
 
 ## Control Types
 
@@ -106,7 +114,7 @@ controls:
 
 ### Tokenize
 
-Replace sensitive values with consistent, syntax-preserving tokens. Same input always produces the same token — enabling analytics without exposing raw data.
+Replace sensitive values with consistent, syntax-preserving tokens. The same input always produces the same token in the same object scope — enabling analytics without exposing raw data.
 
 ```yaml
 controls:
@@ -124,7 +132,7 @@ controls:
 { "email": "tok_abc123def456", "phone": "tok_789xyz012" }
 ```
 
-Tokenization is **deterministic per Virtual API** — the same input value always produces the same token within that Virtual API. Different Virtual APIs produce different tokens for the same input.
+Tokenization is **scope-bound** — the same input value always produces the same token within the same matched object definition. Different object definitions or different Virtual APIs can produce different tokens for the same input.
 
 ### Anonymize
 
@@ -182,7 +190,7 @@ Masking behavior varies by data type:
 
 ### Hash
 
-Replace values with a one-way SHA-256 digest. Consumers can correlate and deduplicate records across datasets without seeing real values — the same input within the same Virtual API always produces the same hash.
+Replace values with a one-way SHA-256 digest. Consumers can correlate and deduplicate records without seeing real values — the same input within the same object scope always produces the same hash.
 
 ```yaml
 controls:
@@ -210,12 +218,12 @@ Hash behavior varies by data type:
 | `bool` | Deterministic boolean | Based on first hash byte |
 
 <Info>
-  Hashing is **scope-bound** — different Virtual APIs produce different hashes for the same input value, preventing cross-lease correlation.
+  Hashing is **scope-bound** — different object definitions or different Virtual APIs produce different hashes for the same input value, preventing broad cross-context correlation.
 </Info>
 
 ### Allow
 
-Pass data through unchanged. Useful when you want to be explicit about which fields are permitted, or to override a `_default` control for specific objects.
+Pass data through unchanged. Useful when you want to be explicit about which fields are permitted, even though fields not referenced by any control already pass through unchanged.
 
 ```yaml
 controls:
@@ -233,9 +241,17 @@ controls:
 { "publicName": "Acme Corp" }
 ```
 
+## Execution Rules
+
+- Data Control uses dot notation in v0.3. Slash notation like `address/city` is rejected.
+- Filter controls target scalar values only: strings, numbers, and booleans. If a path resolves to an object or array, the request fails instead of replacing the whole structure.
+- If the matched payload is an array, the control list runs against each object element automatically. Non-object elements are skipped.
+- Controls execute top-to-bottom. Later controls see values produced by earlier controls.
+- Set `required: true` on a control when a missing field should fail instead of being skipped.
+
 ## Targeting Nested Fields
 
-Use dot notation to target nested fields:
+Use dot notation to target nested fields in v0.3:
 
 ```yaml
 controls:
@@ -252,6 +268,8 @@ controls:
   - type: tokenize
     fields: ["[contacts].email", "[contacts].phone"]
 ```
+
+If the matched payload itself is a root array, DataHarbor applies the same control list to each object element automatically.
 
 ## Combining Controls
 
@@ -282,7 +300,7 @@ objects:
 | **anonymize** | Data for ML training, testing, or demos |
 | **mask** | Support/debugging contexts where partial visibility is needed |
 | **hash** | Correlation and deduplication without exposing original values |
-| **allow** | Explicitly permit fields, or override `_default` controls |
+| **allow** | Explicitly permit fields that should pass through unchanged |
 
 ## Next steps
 

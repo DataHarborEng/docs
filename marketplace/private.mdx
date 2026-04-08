@@ -21,31 +21,16 @@ An internal data catalog for your organization. Teams discover governed data pro
 4. **Data owners approve** (or auto-approve)
 5. **Consume** governed data immediately
 
-```yaml
-virtual_api:
-  name: customer-analytics
-  source: customer-api
+<Info>
+  The current runtime Virtual API Configuration still uses `version`, `objects`, and per-object `controls`. The private-marketplace settings described on this page are product-level lease and catalog configuration, not keys inside that YAML.
+</Info>
 
-  controls:
-    - type: tokenize
-      fields: [email, phone]
-    - type: redact
-      fields: [ssn]
+For example, a governed customer view might use a Virtual API Configuration that tokenizes `email` and `phone` and redacts `ssn`, while the Private Marketplace experience separately controls:
 
-  marketplace:
-    visibility: internal
-    
-    catalog:
-      team: Data Platform
-      tags: [customers, analytics, tokenized]
-      description: "Customer data for analytics. PII tokenized."
-    
-    access:
-      approval: team_lead
-      auto_approve_for:
-        - team: Analytics
-        - team: Data Science
-```
+- Whether the lease is discoverable internally
+- Which team owns the catalog entry
+- Which tags and description appear in the catalog
+- Whether access requests require approval or can auto-approve for specific teams
 
 ## Internal discovery
 
@@ -77,36 +62,15 @@ No more "can you send me that data?" tickets:
 
 ### Manual approval
 
-Data owner reviews each request:
-
-```yaml
-access:
-  approval: manual
-  approvers:
-    - data-platform-leads@yourcompany.com
-```
+Data owner reviews each request before access is granted.
 
 ### Team-based auto-approval
 
-Trusted teams get instant access:
-
-```yaml
-access:
-  auto_approve_for:
-    - team: Analytics
-    - team: Data Science
-    - team: Finance
-```
+Trusted teams such as Analytics, Data Science, or Finance get instant access.
 
 ### Role-based access
 
-Map to your identity provider:
-
-```yaml
-access:
-  auto_approve_if:
-    role: data_analyst
-```
+Access policies can also map to your identity provider, such as automatically approving users with a `data_analyst` role.
 
 ## Use cases
 

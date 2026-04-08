@@ -21,6 +21,7 @@ A Virtual API is a governed view of an existing dataset. Instead of cloning data
 A Virtual API spec defines which fields to protect, organized by the API objects (route segments) they apply to:
 
 ```yaml
+version: "0.3"
 objects:
   customers:
     controls:
@@ -31,6 +32,8 @@ objects:
 ```
 
 This spec redacts `ssn` and `date_of_birth` and anonymizes `email` for any request matching the `customers` route — such as `/api/customers` or `/api/customers/456`.
+
+In the current runtime, controls live under named object definitions inside `objects`. There is no top-level `controls` list in the executed Virtual API Configuration.
 
 <Tip>
   You'll see `fields` written two ways in our examples — both are valid YAML and produce identical results:
@@ -50,6 +53,7 @@ This spec redacts `ssn` and `date_of_birth` and anonymizes `email` for any reque
 Controls execute **top-to-bottom** as an ordered pipeline. This means you can create a field with a [transform](/control-blocks/data-transform) and then apply a privacy control to it in a later step:
 
 ```yaml
+version: "0.3"
 objects:
   customers:
     controls:
@@ -76,6 +80,7 @@ In this example, `full_name` is created by the combine, then hashed — and the 
 Each key under `objects` is a named object definition that matches against URL path segments. DataHarbor matches the object name to the last (or second-to-last) segment of the request path.
 
 ```yaml
+version: "0.3"
 objects:
   addresses:
     controls:
@@ -98,6 +103,7 @@ objects:
 Target nested fields using dot notation, and array items using `[arrayName]` syntax:
 
 ```yaml
+version: "0.3"
 objects:
   orders:
     controls:
@@ -106,6 +112,10 @@ objects:
 ```
 
 This redacts the top-level `name`, plus the `name` and `city` fields inside every item in the `addresses` array — all within a single object definition.
+
+Use dot notation only in v0.3. Slash notation like `metadata/tag` is rejected.
+
+If an endpoint returns a root array, the matched object's controls run against each object element automatically.
 
 For nested objects, use dot notation:
 
@@ -121,6 +131,7 @@ One enrolled API can power many governed views, each with different control conf
 
 ```yaml
 # Partner View — redact identifiers
+version: "0.3"
 objects:
   customers:
     controls:
@@ -130,6 +141,7 @@ objects:
 
 ```yaml
 # Analytics View — tokenize for correlation
+version: "0.3"
 objects:
   customers:
     controls:
@@ -141,6 +153,7 @@ objects:
 
 ```yaml
 # AI Training View — anonymize for model training
+version: "0.3"
 objects:
   customers:
     controls:
@@ -157,6 +170,7 @@ No duplicated data. No cloned APIs.
 `_default` is an optional catch-all that applies when no named object matches the request route:
 
 ```yaml
+version: "0.3"
 objects:
   addresses:
     controls:
@@ -178,6 +192,7 @@ objects:
 | `useStrictNameMatching` | `true` | When `false`, match field names case-insensitively |
 
 ```yaml
+version: "0.3"
 failOnUnmatchedObject: true
 objects:
   addresses:

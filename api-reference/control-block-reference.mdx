@@ -7,6 +7,29 @@ description: Detailed reference for all Control Block types.
 
 Detailed reference for all Control Block types and their options.
 
+<Info>
+  In the current runtime, controls live inside a v0.3 Virtual API Configuration under `objects.<objectName>.controls`. This page documents the control entries themselves.
+</Info>
+
+## Common Execution Rules
+
+| Rule | Behavior |
+|------|----------|
+| Ordering | Controls execute top-to-bottom |
+| Path syntax | Use dot notation, with array segments like `"[contacts].email"`. Slash notation is not supported in v0.3. |
+| Filter targets | `redact`, `tokenize`, `anonymize`, `mask`, `hash`, and `allow` require scalar targets (`string`, `number`, or `bool`) |
+| Root arrays | If the matched payload is an array, controls apply to each object element automatically. Non-object elements are skipped. |
+
+## Common Options
+
+| Option | Applies to | Required | Description |
+|--------|------------|----------|-------------|
+| `fields` | All controls | Yes | Field paths to operate on |
+| `required` | All controls | No | When `true`, missing referenced fields fail instead of being skipped. For `coalesce`, all fields missing or empty also fails. |
+| `into` | `combine`, `coalesce` | Yes | Target field for the transformed value |
+| `separator` | `combine` | No | Separator inserted between combined string values. Default: `""` |
+| `remove_source` | `combine`, `coalesce` | No | Remove the source fields after the transform completes. Default: `false` |
+
 ## Data Control
 
 ### redact
@@ -22,8 +45,7 @@ Remove sensitive data entirely.
 - Strings → `""`
 - Numbers → `0`
 - Booleans → `false`
-- Objects → `{}`
-- Arrays → `[]`
+- Objects and arrays are invalid targets
 
 ```yaml
 - type: redact
@@ -45,9 +67,10 @@ Replace with deterministic tokens.
 | `fields` | array | Yes | Field paths to tokenize |
 
 **Behavior:**
-- Same input → same token (within one Virtual API)
-- Different Virtual APIs → different tokens
+- Same input → same token within the same matched object definition
+- Different object definitions or different Virtual APIs → different tokens
 - Token format: `tok_[hash]`
+- Booleans are not supported
 
 ```yaml
 - type: tokenize
@@ -78,7 +101,7 @@ Replace with random values preserving structure.
   fields:
     - email
     - name
-    - address
+    - street_address
 ```
 
 ---
@@ -109,7 +132,7 @@ Partially redact values while preserving structure.
 
 ### hash
 
-Replace with one-way SHA-256 digest. Deterministic within a Virtual API — same input always produces the same hash.
+Replace with one-way SHA-256 digest. Deterministic within the same matched object definition — same input always produces the same hash in the same scope.
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
@@ -160,7 +183,8 @@ Merge fields into a new field.
 | `fields` | array | Yes | Fields to combine (order matters) |
 | `into` | string | Yes | Name of new field |
 | `separator` | string | No | Separator between values. Default: `""` |
-| `remove_source` | boolean | No | Remove original fields. Default: `false` |
+
+All source fields must be strings. When you use nested paths, every entry in `fields` plus `into` must share the same parent path. If `into` already exists, the transform fails instead of overwriting it.
 
 ```yaml
 - type: combine
@@ -183,6 +207,8 @@ Select first non-empty value.
 | `type` | string | Yes | Must be `coalesce` |
 | `fields` | array | Yes | Fields to check (order = priority) |
 | `into` | string | Yes | Name of new field |
+
+`coalesce` treats missing values, `null`, and empty strings as empty. When you use nested paths, every entry in `fields` plus `into` must share the same parent path. If `into` already exists, the transform fails instead of overwriting it.
 
 ```yaml
 - type: coalesce
@@ -285,5 +311,3 @@ fields:
   - "[contacts].email"        # All items in array
   - "[orders].[items].sku"    # Nested arrays
 ```
-
-
