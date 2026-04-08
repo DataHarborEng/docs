@@ -7,18 +7,18 @@ description: The foundation of DataHarbor. Publish governed, purpose-limited dat
 
 **One source of truth. Many governed views.**
 
-A Virtual API is a governed view of an existing dataset. Instead of cloning data or building custom pipelines for each consumer, you define a declarative spec that applies redaction, tokenization, and transformations at the field level — automatically, per route.
+A Virtual API is a governed view of an existing dataset. Instead of cloning data or building custom pipelines for each consumer, you define a declarative Virtual API Configuration that applies redaction, tokenization, and transformations at the field level — automatically, per route.
 
 ## How it works
 
 1. **Enroll** your data source (REST API today, data lakes coming soon)
-2. **Define** your spec — object definitions, controls, and access rules
+2. **Define** your Virtual API Configuration — object definitions, controls, and access rules
 3. **Publish** — your Virtual API is instantly available
 4. **Monitor** — observe usage and schema changes over time
 
 ## Basic configuration
 
-A Virtual API spec defines which fields to protect, organized by the API objects (route segments) they apply to:
+A Virtual API Configuration defines which fields to protect, organized by the API objects (route segments) they apply to:
 
 ```yaml
 version: "0.3"
@@ -31,7 +31,7 @@ objects:
         fields: [email]
 ```
 
-This spec redacts `ssn` and `date_of_birth` and anonymizes `email` for any request matching the `customers` route — such as `/api/customers` or `/api/customers/456`.
+This configuration redacts `ssn` and `date_of_birth` and anonymizes `email` for any request matching the `customers` route — such as `/api/customers` or `/api/customers/456`.
 
 In the current runtime, controls live under named object definitions inside `objects`. There is no top-level `controls` list in the executed Virtual API Configuration.
 

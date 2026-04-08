@@ -14,7 +14,7 @@ tag: Preview
 
 **Make your data discoverable. Monetize it if you want.**
 
-Publish governed Virtual APIs for discovery — free or per-request — with privacy rules that travel with every call. Partners and buyers browse listings, preview schemas, and request access instantly.
+Publish governed Virtual APIs for discovery — free or per-request — with privacy rules that travel with every call. Partners and buyers browse listings, preview schemas, and request access through marketplace keys.
 
 ## Registry endpoint
 
@@ -30,12 +30,12 @@ AI agents query the registry to discover governed endpoints ready for instant co
 
 1. **Create a Virtual API** — Define your source, apply privacy controls, and set access rules.
 2. **Set visibility to Listed Open** — Your Virtual API must have [Listed Open](/core/agents#listed-open) visibility to appear in the registry and catalog.
-3. **Buyers discover and request** — Buyers browse listings, preview schemas, see governance policies, and request access.
+3. **Buyers discover and connect** — Buyers browse listings, preview schemas, see governance policies, create a marketplace key from the account settings page, and connect.
 4. **Access flows through controls** — Every request goes through your Virtual API's governance. Usage is metered, logged, and auditable. Revoke anytime.
 
 ## Visibility requirement
 
-Only Virtual APIs with **Listed Open** visibility appear in the Global Marketplace. This is the most open setting — the agent card is fully public, no authentication is required, and the agent is indexed in the catalog.
+Only Virtual APIs with **Listed Open** visibility appear in the Global Marketplace. This is the most open discovery setting — the agent card and registry listing are public, and the current relay endpoint still requires a marketplace key for data access.
 
 | Visibility | In Registry | In Catalog |
 |---|---|---|
@@ -68,6 +68,7 @@ Every marketplace consumer is bound by your Virtual API's controls:
 
 - Privacy controls (tokenization, redaction) are enforced on every call
 - Access controls (geo restrictions, expiration) apply
+- Marketplace relay requests use marketplace keys (`mkp_...`)
 - Usage is metered, logged, and auditable
 - Revocation is instant
 

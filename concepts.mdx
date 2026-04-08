@@ -11,20 +11,20 @@ A **Virtual API** is a published, governed view of an existing dataset. It's the
 
 Each Virtual API:
 - Points to a single enrolled data source
-- Applies Control Blocks (privacy, transformation, access rules)
+- Applies data controls, transforms, and access rules
 - Can be delivered via REST, MCP, or Data Lake
 - Is versioned, auditable, and revocable
 
 ### Object Definitions
 
-Virtual APIs use a YAML spec with an `objects` key containing named object definitions. Each object definition specifies controls that apply to that resource type.
+Virtual APIs use a YAML Virtual API Configuration with an `objects` key containing named object definitions. Each object definition specifies controls that apply to that resource type.
 
 Given an API with these endpoints:
 - `/properties` — list of properties
 - `/properties/{propertyId}/inspections` — inspections for a property
 - `/properties/{propertyId}/inspections/{inspectionId}/issues` — issues for an inspection
 
-The spec defines controls for each object type:
+This configuration defines controls for each object type:
 
 ```yaml
 version: "0.3"
@@ -49,8 +49,8 @@ DataHarbor automatically applies the correct object definition based on the API 
 
 For a request to `/properties/{propertyId}/inspections/{inspectionId}/issues`, the system:
 1. Parses the URL path segments
-2. Matches against defined objects
-3. Applies the deepest match — in this case, `issues`
+2. Checks whether the last path segment matches a defined object name — in this case, `issues`
+3. If the last segment does not match, checks the second-to-last path segment instead
 
 Only one object definition is selected per request. If no named object matches, `_default` is used when present.
 

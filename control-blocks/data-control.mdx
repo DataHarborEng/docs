@@ -16,19 +16,19 @@ Field-level privacy controls that protect sensitive data without requiring engin
 </Info>
 
 <Tip>
-  For a complete control-block spec, start with `version: "0.3"` and define controls under `objects.<objectName>.controls`. Snippets below that start with `controls:` are fragments meant to live inside an object definition.
+  For a complete Virtual API Configuration, start with `version: "0.3"` and define controls under `objects.<objectName>.controls`. Snippets below that start with `controls:` are fragments meant to live inside an object definition.
 </Tip>
 
 ## Object Definitions
 
-Data controls are defined per object type in your Virtual API spec. The `objects` key maps resource names to their control configurations.
+Data controls are defined per object type in your Virtual API Configuration. The `objects` key maps resource names to their control configurations.
 
 Given an API with these endpoints:
 - `/properties` — list of properties
 - `/properties/{propertyId}/inspections` — inspections for a property
 - `/properties/{propertyId}/inspections/{inspectionId}/issues` — issues for an inspection
 
-The spec defines controls for each object type:
+This configuration defines controls for each object type:
 
 ```yaml
 version: "0.3"
@@ -114,7 +114,7 @@ controls:
 
 ### Tokenize
 
-Replace sensitive values with consistent, syntax-preserving tokens. The same input always produces the same token in the same object scope — enabling analytics without exposing raw data.
+Replace sensitive values with consistent, syntax-preserving tokens. The same input always produces the same token within the same Virtual API and matched object definition — enabling analytics without exposing raw data.
 
 ```yaml
 controls:
@@ -132,7 +132,7 @@ controls:
 { "email": "tok_abc123def456", "phone": "tok_789xyz012" }
 ```
 
-Tokenization is **scope-bound** — the same input value always produces the same token within the same matched object definition. Different object definitions or different Virtual APIs can produce different tokens for the same input.
+Tokenization is **scope-bound** — the same input value always produces the same token within the same Virtual API and matched object definition. Different object definitions or different Virtual APIs can produce different tokens for the same input.
 
 ### Anonymize
 
@@ -190,7 +190,7 @@ Masking behavior varies by data type:
 
 ### Hash
 
-Replace values with a one-way SHA-256 digest. Consumers can correlate and deduplicate records without seeing real values — the same input within the same object scope always produces the same hash.
+Replace values with a one-way SHA-256 digest. Consumers can correlate and deduplicate records without seeing real values — the same input within the same Virtual API and matched object definition always produces the same hash.
 
 ```yaml
 controls:

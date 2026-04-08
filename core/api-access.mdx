@@ -1,6 +1,6 @@
 ---
 title: API Access
-description: REST access to your Virtual APIs — private with API key or public via relay.
+description: REST access to your Virtual APIs — authenticated fetch and marketplace relay.
 ---
 
 # API Access
@@ -12,8 +12,8 @@ Every Virtual API is accessible over REST. How consumers connect depends on the 
 | Visibility | Endpoint | Auth | Registry |
 |---|---|---|---|
 | **Disabled** / **Private** | `/fetch/{leaseId}/{path}` | API key required | No |
-| **Unlisted Open** | `/relay/{leaseId}/{path}` | None | No |
-| **Listed Open** | `/relay/{leaseId}/{path}` | None | Yes — discoverable in catalog |
+| **Unlisted Open** | `/relay/{leaseId}/{path}` | Marketplace key required | No |
+| **Listed Open** | `/relay/{leaseId}/{path}` | Marketplace key required | Yes — discoverable in catalog |
 
 ## Private access (fetch)
 
@@ -23,16 +23,18 @@ Virtual APIs with **Disabled** or **Private** visibility use the fetch endpoint 
 https://service.dataharbor.co/fetch/{leaseId}/{path}
 ```
 
-Include the `dataharbor-api-key` header — you can find your API key in the Virtual API dashboard.
+Include the `dataHarbor-api-key` header — you can find your API key in the Virtual API dashboard.
 
 ```bash
-curl -H "dataharbor-api-key: YOUR_API_KEY" \
+curl -H "dataHarbor-api-key: YOUR_API_KEY" \
   https://service.dataharbor.co/fetch/b097a4d3-44e6-4490-9f03-104f4d636e20
 ```
 
-## Open access (relay)
+## Marketplace relay access
 
-Virtual APIs with **Unlisted Open** or **Listed Open** visibility use the relay endpoint — no authentication required:
+Virtual APIs with **Unlisted Open** or **Listed Open** visibility use the relay endpoint. Discovery can be public, but the current runtime still requires a marketplace API key (`mkp_...`) on relay calls:
+
+You can create a marketplace key from the account settings page in DataHarbor.
 
 ```
 https://service.dataharbor.co/relay/{leaseId}/{path}
@@ -42,17 +44,19 @@ The `{leaseId}` is the unique identifier for your Virtual API. The `{path}` maps
 
 ```bash
 # List properties
-curl https://service.dataharbor.co/relay/166d4e26-3d40-4e44-806a-e56b93ebb121/properties
+curl -H "dataHarbor-api-key: mkp_your_marketplace_key" \
+  https://service.dataharbor.co/relay/166d4e26-3d40-4e44-806a-e56b93ebb121/properties
 
 # Get a specific property's issues
-curl https://service.dataharbor.co/relay/166d4e26-3d40-4e44-806a-e56b93ebb121/properties/1/issues
+curl -H "dataHarbor-api-key: mkp_your_marketplace_key" \
+  https://service.dataharbor.co/relay/166d4e26-3d40-4e44-806a-e56b93ebb121/properties/1/issues
 ```
 
 <Tip>
   The fetch endpoint also works for **Unlisted Open** and **Listed Open** Virtual APIs — useful when you want authenticated access even on a publicly visible API.
 </Tip>
 
-**Unlisted Open** is ideal for sharing with specific partners — they need the URL, but no credentials. **Listed Open** goes further: your Virtual API appears in the DataHarbor registry and catalog, making it fully discoverable.
+**Unlisted Open** is ideal for partner-specific sharing. **Listed Open** goes further: your Virtual API appears in the DataHarbor registry and catalog, making it discoverable while still routing requests through marketplace-key enforcement.
 
 ## Registry
 
@@ -63,7 +67,7 @@ Virtual APIs with **Listed Open** visibility are indexed in the DataHarbor regis
 
 ## Governance still applies
 
-Open access doesn't mean ungoverned access. Every request through the relay endpoint still enforces:
+Marketplace relay access doesn't mean ungoverned access. Every request through the relay endpoint still enforces:
 
 - All controls (redact, tokenize, hash, transforms)
 - Geo restrictions

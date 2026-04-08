@@ -25,14 +25,14 @@ Real-time field transformations applied at the data boundary. No ETL pipelines o
 </Tip>
 
 <Info>
-  For a complete control-block spec, start with `version: "0.3"` and define controls under `objects.<objectName>.controls`. Snippets below that start with `controls:` are fragments meant to live inside an object definition.
+  For a complete Virtual API Configuration, start with `version: "0.3"` and define controls under `objects.<objectName>.controls`. Snippets below that start with `controls:` are fragments meant to live inside an object definition.
 </Info>
 
 ## Operations
 
 ### Combine
 
-Merge two string fields into a single new field.
+Merge two or more string fields into a single new field.
 
 ```yaml
 controls:
@@ -56,7 +56,7 @@ controls:
 
 ### Coalesce
 
-Select the first non-empty value from two fields of the same type. Ideal for fallback logic and data normalization.
+Select the first non-empty value from two or more fields. Ideal for fallback logic and data normalization.
 
 ```yaml
 controls:
@@ -81,11 +81,12 @@ controls:
 
 - Controls execute top-to-bottom. A later control can use a field created by an earlier control.
 - `fields` order matters for both `combine` and `coalesce`.
+- `combine` only operates on string source fields.
 - All `fields` and `into` must share the same parent path when you use nested paths. For example, `address.city`, `address.state`, and `address.location` are valid together.
 - `into` must point to a new field. If the target field already exists, the transform fails instead of overwriting it.
-- Set `required: true` when missing inputs should fail the request. For `coalesce`, missing, `null`, and empty-string values are treated as empty.
+- Set `required: true` when missing inputs should fail the request. For `coalesce`, missing, `null`, and empty-string values are treated as empty, but whitespace-only strings, `0`, and `false` still count as present values.
 - `remove_source: true` works for both `combine` and `coalesce`.
-- If the matched payload is an array, transforms run against each matching object element while preserving top-to-bottom control order.
+- If the matched payload is an array, the full control pipeline runs against each matching object element in order. Non-object elements are skipped.
 
 ## Nested Paths
 

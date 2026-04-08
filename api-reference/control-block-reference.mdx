@@ -67,7 +67,7 @@ Replace with deterministic tokens.
 | `fields` | array | Yes | Field paths to tokenize |
 
 **Behavior:**
-- Same input → same token within the same matched object definition
+- Same input → same token within the same Virtual API and matched object definition
 - Different object definitions or different Virtual APIs → different tokens
 - Token format: `tok_[hash]`
 - Booleans are not supported
@@ -132,7 +132,7 @@ Partially redact values while preserving structure.
 
 ### hash
 
-Replace with one-way SHA-256 digest. Deterministic within the same matched object definition — same input always produces the same hash in the same scope.
+Replace with one-way SHA-256 digest. Deterministic within the same Virtual API and matched object definition — same input always produces the same hash in the same scope.
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
@@ -180,7 +180,7 @@ Merge fields into a new field.
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
 | `type` | string | Yes | Must be `combine` |
-| `fields` | array | Yes | Fields to combine (order matters) |
+| `fields` | array | Yes | Fields to combine (order matters; at least 2) |
 | `into` | string | Yes | Name of new field |
 | `separator` | string | No | Separator between values. Default: `""` |
 
@@ -205,10 +205,10 @@ Select first non-empty value.
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
 | `type` | string | Yes | Must be `coalesce` |
-| `fields` | array | Yes | Fields to check (order = priority) |
+| `fields` | array | Yes | Fields to check (order = priority; at least 2) |
 | `into` | string | Yes | Name of new field |
 
-`coalesce` treats missing values, `null`, and empty strings as empty. When you use nested paths, every entry in `fields` plus `into` must share the same parent path. If `into` already exists, the transform fails instead of overwriting it.
+`coalesce` treats missing values, `null`, and empty strings as empty. Whitespace-only strings, numeric `0`, boolean `false`, objects, and arrays are all treated as present values. When you use nested paths, every entry in `fields` plus `into` must share the same parent path. If `into` already exists, the transform fails instead of overwriting it.
 
 ```yaml
 - type: coalesce

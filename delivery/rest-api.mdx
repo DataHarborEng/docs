@@ -7,80 +7,50 @@ description: Expose your Virtual APIs as REST endpoints with API key authenticat
 
 **An endpoint and a key. That's it.**
 
-The standard delivery mechanism for Virtual APIs. Get an endpoint and API key — ready for integration in seconds.
+The standard delivery mechanism for Virtual APIs. The current runtime exposes lease-based REST endpoints and applies your Virtual API Configuration on every request.
 
-## How it works
+## Runtime endpoints
 
-When you publish a Virtual API, DataHarbor automatically provisions:
-- A unique REST endpoint
-- An API key for authentication
-- Usage analytics
+| Access mode | Endpoint | Authentication |
+|---|---|---|
+| Authenticated fetch | `/fetch/{leaseId}/{path}` | `dataHarbor-api-key` |
+| Marketplace relay | `/relay/{leaseId}/{path}` | `dataHarbor-api-key: mkp_...` |
 
-REST delivery sits on top of your existing governed Virtual API Configuration. Once published, DataHarbor provisions an endpoint like `https://service.dataharbor.co/v1/partner-view` automatically.
+`fetch` is the standard authenticated path for a Virtual API. `relay` is reserved for Virtual APIs with `Unlisted Open` or `Listed Open` visibility, and the current runtime still requires a marketplace API key on relay requests.
 
-## Authentication
+## Authenticated fetch
 
-All requests require an API key in the `Authorization` header:
-
-```bash
-curl -H "Authorization: Bearer dh_live_abc123..." \
-  https://service.dataharbor.co/v1/partner-view/customers
-```
-
-## API key management
-
-### Create a new key
-
-```yaml
-# Via configuration
-delivery:
-  type: rest
-  keys:
-    - name: production
-      expires: 2025-12-31
-    - name: development
-      rate_limit: 100/h
-```
-
-### Rotate keys
-
-Generate a new key without downtime:
+Use the API key issued for your Virtual API and call the fetch endpoint with the upstream route appended after the lease ID:
 
 ```bash
-POST /v1/virtual-apis/partner-view/keys/rotate
-
-{
-  "current_key": "dh_live_abc123...",
-  "grace_period": "24h"
-}
+curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+  https://service.dataharbor.co/fetch/b097a4d3-44e6-4490-9f03-104f4d636e20/customers
 ```
 
-During the grace period, both old and new keys are valid.
+## Marketplace relay
 
-### Revoke keys
+For marketplace-visible Virtual APIs, the relay endpoint uses the same lease-based path shape but expects a marketplace key (`mkp_...`):
 
-Instantly invalidate a key:
+You can create a marketplace key from the account settings page in DataHarbor.
 
 ```bash
-DELETE /v1/virtual-apis/partner-view/keys/dh_live_abc123
+curl -H "dataHarbor-api-key: mkp_your_marketplace_key" \
+  https://service.dataharbor.co/relay/166d4e26-3d40-4e44-806a-e56b93ebb121/customers
 ```
 
-## Usage analytics
+## Response shape
 
-Track requests, latency, and error rates per Virtual API:
+DataHarbor preserves your upstream response shape and applies controls in order before returning the payload.
 
 ```json
-{
-  "virtual_api": "partner-view",
-  "period": "2025-01-01/2025-01-31",
-  "metrics": {
-    "total_requests": 45230,
-    "successful_requests": 44892,
-    "error_rate": 0.0075,
-    "avg_latency_ms": 42,
-    "p99_latency_ms": 156
+[
+  {
+    "id": "cust_123",
+    "name": "Jane Doe",
+    "email": "tok_abc123",
+    "ssn": ""
   }
-}
+]
 ```
 
 ## Request/response flow
@@ -90,17 +60,17 @@ Every request passes through the governance layer:
 1. **Authenticate** — Validate API key
 2. **Authorize** — Check access controls (geo, IP, expiration)
 3. **Fetch** — Call upstream source
-4. **Transform** — Apply Control Blocks (redact, tokenize, transform)
+4. **Apply controls** — Run the ordered control pipeline (redact, tokenize, transform)
 5. **Respond** — Return governed data
 
 ## Example integration
 
 ```javascript
 const response = await fetch(
-  'https://service.dataharbor.co/v1/partner-view/customers',
+  'https://service.dataharbor.co/fetch/b097a4d3-44e6-4490-9f03-104f4d636e20/customers',
   {
     headers: {
-      'Authorization': 'Bearer dh_live_abc123...',
+      'dataHarbor-api-key': 'YOUR_API_KEY',
       'Content-Type': 'application/json'
     }
   }

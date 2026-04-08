@@ -48,22 +48,23 @@ Your Virtual API is instantly available via REST or MCP endpoint.
 
 ```bash
 # REST API
-curl -H "Authorization: Bearer YOUR_API_KEY" \
-  https://service.dataharbor.co/v1/partner-customer-view/customers
+curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+  https://service.dataharbor.co/fetch/YOUR_LEASE_ID/customers
+```
 
-# Response: governed data with controls applied
-{
-  "customers": [
-    {
-      "id": "cust_123",
-      "name": "Jane Doe",
-      "email": "tok_abc123",      // tokenized
-      "phone": "tok_def456",      // tokenized
-      "ssn": "",                  // redacted
-      "date_of_birth": ""         // redacted
-    }
-  ]
-}
+The response shape matches your upstream API, with your controls already applied:
+
+```json
+[
+  {
+    "id": "cust_123",
+    "name": "Jane Doe",
+    "email": "tok_abc123",
+    "phone": "tok_def456",
+    "ssn": "",
+    "date_of_birth": ""
+  }
+]
 ```
 
 ## Next steps
