@@ -27,6 +27,7 @@ Given an API with these endpoints:
 The spec defines controls for each object type:
 
 ```yaml
+version: "0.3"
 objects:
   properties:    # matches /properties, /properties/{propertyId}
     controls:
@@ -51,6 +52,8 @@ For a request to `/properties/{propertyId}/inspections/{inspectionId}/issues`, t
 2. Matches against defined objects
 3. Applies the deepest match — in this case, `issues`
 
+Only one object definition is selected per request. If no named object matches, `_default` is used when present.
+
 This works for both collections and single resources:
 - `/properties/{propertyId}/inspections/{inspectionId}/issues` → applies `issues` controls to the list
 - `/properties/{propertyId}/inspections/{inspectionId}/issues/{issueId}` → applies `issues` controls to that single object
@@ -60,6 +63,7 @@ This works for both collections and single resources:
 `_default` is an optional catch-all for any object not explicitly defined.
 
 ```yaml
+version: "0.3"
 objects:
   properties:
     controls:
@@ -71,7 +75,7 @@ objects:
         fields: [createdBy]
 ```
 
-When a request matches an undefined object, `_default` controls apply. When a request matches a named object, controls merge — the named object's controls take precedence on conflicts, and `_default` fills in the rest.
+When a request matches an undefined object, `_default` controls apply. When a request matches a named object, only that named object's controls apply.
 
 ## Control Blocks
 

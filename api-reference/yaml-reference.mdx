@@ -10,68 +10,71 @@ Complete reference for Virtual API configuration.
 ## Virtual API structure
 
 ```yaml
-virtual_api:
-  # Required
-  name: string              # Unique identifier
-  source: string            # Enrolled data source name
+version: "0.3"
+failOnUnmatchedObject: false
+useStrictNameMatching: true
 
-  # Optional
-  description: string       # Human-readable description
-  endpoint: string          # Source endpoint to expose
-  version: string           # Semantic version (auto-incremented if omitted)
+objects:
+  customers:
+    controls:
+      - type: redact
+        fields: [ssn, date_of_birth]
+      - type: combine
+        fields: [first_name, last_name]
+        into: full_name
+        separator: " "
 
-  # Control Blocks
-  controls:
-    - type: redact | tokenize | anonymize | combine | coalesce
-      # ... control-specific options
-
-  # Access Controls
-  access:
-    expires: date           # ISO 8601 date or relative (e.g., "90d")
-    geo_allow: [string]     # Country codes
-    geo_deny: [string]      # Country codes
-    ip_allow: [string]      # CIDR ranges
-    rate_limit:
-      requests: number
-      period: string        # e.g., "1h", "1d"
-
-  # Delivery
-  delivery:
-    type: rest | mcp | data_lake
-    # ... delivery-specific options
-
-  # Marketplace (optional)
-  marketplace:
-    listed: boolean
-    visibility: public | internal
-    pricing:
-      model: per_request | subscription | free
-      price: number
+  _default:
+    controls:
+      - type: redact
+        fields: [createdBy]
 ```
 
-## Source enrollment
+| Key | Type | Description |
+|-----|------|-------------|
+| `version` | string | Use `"0.3"` for the current controls pipeline |
+| `objects` | mapping | Named object definitions keyed by route segment |
+| `objects.<name>.controls` | array | Ordered list of control blocks for that object |
+| `objects._default` | object | Catch-all object definition used only when no named object matches |
+| `failOnUnmatchedObject` | boolean | Fail the request if no object definition matches |
+| `useStrictNameMatching` | boolean | When `false`, field matching is case-insensitive |
+
+## Object Definitions
+
+Object definition keys are matched against the last path segment, then the second-to-last path segment of the request URL.
 
 ```yaml
-source:
-  name: string              # Unique identifier
-  type: rest                # Currently only REST supported
-  base_url: string          # Base URL of the API
-
-  auth:
-    type: bearer | api_key | basic
-    # ... auth-specific options
-
-  endpoints:
-    - path: string          # e.g., "/customers"
-      method: GET | POST    # HTTP method
-
-  schema:                   # Optional explicit schema
-    /path:
-      type: object | array
-      properties: { ... }
+version: "0.3"
+objects:
+  addresses:
+    controls:
+      - type: redact
+        fields: [name]
+  users:
+    controls:
+      - type: redact
+        fields: [metadata.tag]
+  _default:
+    controls:
+      - type: redact
+        fields: [description]
 ```
 
+`_default` is a fallback. It is used only when no named object matches.
+
+## Common Control Options
+
+| Option | Applies to | Required | Description |
+|--------|------------|----------|-------------|
+| `fields` | All controls | Yes | Field paths to operate on |
+| `required` | All controls | No | When `true`, missing referenced fields fail instead of being skipped |
+| `into` | `combine`, `coalesce` | Yes | Target field for the transformed value |
+| `separator` | `combine` | No | Separator inserted between combined string values. Default: `""` |
+| `remove_source` | `combine`, `coalesce` | No | Remove source fields after the transform completes. Default: `false` |
+
 ## Control Blocks
+
+Control blocks live inside `objects.<objectName>.controls`, not in a top-level `controls` array.
 
 ### Redact
 
@@ -80,7 +83,8 @@ source:
   fields:
     - field_name
     - nested.field
-    - [array].field
+    - "[array].field"
+  required: false
 ```
 
 ### Tokenize
@@ -89,6 +93,7 @@ source:
 - type: tokenize
   fields:
     - field_name
+  required: false
 ```
 
 ### Anonymize
@@ -97,6 +102,34 @@ source:
 - type: anonymize
   fields:
     - field_name
+  required: false
+```
+
+### Mask
+
+```yaml
+- type: mask
+  fields:
+    - field_name
+  required: false
+```
+
+### Hash
+
+```yaml
+- type: hash
+  fields:
+    - field_name
+  required: false
+```
+
+### Allow
+
+```yaml
+- type: allow
+  fields:
+    - field_name
+  required: false
 ```
 
 ### Combine
@@ -107,8 +140,9 @@ source:
     - first_field
     - second_field
   into: new_field_name
-  separator: string         # Default: ""
-  remove_source: boolean    # Default: false
+  separator: ""
+  remove_source: false
+  required: false
 ```
 
 ### Coalesce
@@ -119,87 +153,28 @@ source:
     - primary_field
     - fallback_field
   into: new_field_name
+  remove_source: false
+  required: false
 ```
 
-## Authentication types
+## Path Syntax
 
-### Bearer token
+Use dot notation in v0.3:
 
 ```yaml
-auth:
-  type: bearer
-  token: ${ENV_VAR}
+fields:
+  - metadata.tag
+  - billing.address.street
+  - "[addresses].city"
+  - "[orders].[items].sku"
 ```
 
-### API key (header)
+Slash notation like `metadata/tag` is not supported in v0.3.
 
-```yaml
-auth:
-  type: api_key
-  header: X-API-Key
-  key: ${ENV_VAR}
-```
+## Execution Notes
 
-### API key (query)
-
-```yaml
-auth:
-  type: api_key
-  param: api_key
-  key: ${ENV_VAR}
-```
-
-### Basic auth
-
-```yaml
-auth:
-  type: basic
-  username: ${USERNAME}
-  password: ${PASSWORD}
-```
-
-## Delivery options
-
-### REST
-
-```yaml
-delivery:
-  type: rest
-  keys:
-    - name: string
-      expires: date
-      rate_limit: string    # e.g., "1000/h"
-```
-
-### MCP
-
-```yaml
-delivery:
-  type: mcp
-  oauth:
-    enabled: true
-```
-
-### Data Lake
-
-```yaml
-delivery:
-  type: data_lake
-  destination:
-    type: databricks | snowflake | fabric | bigquery
-    # ... destination-specific options
-  sync:
-    schedule: hourly | daily | weekly
-    mode: full | incremental
-```
-
-## Environment variables
-
-Use `${VAR_NAME}` syntax to reference environment variables:
-
-```yaml
-auth:
-  token: ${API_TOKEN}
-```
-
-Variables are resolved at runtime. Never commit secrets to configuration files.
+- Controls execute top-to-bottom.
+- Filter controls target scalar values only: strings, numbers, and booleans.
+- If the matched payload is a root array, controls apply to each object element automatically.
+- When you use nested transform paths, every entry in `fields` plus `into` must share the same parent path.
+- `combine` fails if `into` already exists. `coalesce` also fails if `into` already exists.
