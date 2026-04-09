@@ -96,6 +96,10 @@ objects:
 
 Remove sensitive data entirely. Strings become empty, numbers become zero.
 
+<Info>
+  `redact` keeps the field in the response and only changes its value. If you want the field to disappear entirely, use `delete` from [Data Transform](/control-blocks/data-transform).
+</Info>
+
 ```yaml
 controls:
   - type: redact
@@ -243,15 +247,15 @@ controls:
 
 ## Execution Rules
 
-- Data Control uses dot notation in v0.3. Slash notation like `address/city` is rejected.
+- Data Control uses dot notation. Slash notation like `address/city` is rejected.
 - Filter controls target scalar values only: strings, numbers, and booleans. If a path resolves to an object or array, the request fails instead of replacing the whole structure.
 - If the matched payload is an array, the control list runs against each object element automatically. Non-object elements are skipped.
 - Controls execute top-to-bottom. Later controls see values produced by earlier controls.
-- Set `required: true` on a control when a missing field should fail instead of being skipped.
+- Set `required: true` on a control when a missing field should fail instead of being skipped. That check is full-path strict: if any intermediate parent segment or the final field is missing, the request fails.
 
 ## Targeting Nested Fields
 
-Use dot notation to target nested fields in v0.3:
+Use dot notation to target nested fields:
 
 ```yaml
 controls:

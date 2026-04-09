@@ -77,15 +77,38 @@ controls:
 { "mobile_phone": "", "home_phone": "555-1234", "primary_phone": "555-1234" }
 ```
 
+### Delete
+
+Remove one or more fields entirely from the outbound payload. Use this when you do not want consumers to see that a field exists at all.
+
+```yaml
+controls:
+  - type: delete
+    fields:
+      - internal_note
+      - debug_flags
+```
+
+**Input:**
+```json
+{ "full_name": "Jane Doe", "internal_note": "vip", "debug_flags": ["test"], "email": "jane@example.com" }
+```
+
+**Output:**
+```json
+{ "full_name": "Jane Doe", "email": "jane@example.com" }
+```
+
 ## Execution Rules
 
 - Controls execute top-to-bottom. A later control can use a field created by an earlier control.
 - `fields` order matters for both `combine` and `coalesce`.
 - `combine` only operates on string source fields.
 - All `fields` and `into` must share the same parent path when you use nested paths. For example, `address.city`, `address.state`, and `address.location` are valid together.
+- `delete` does not use `into`. It removes the fields named in `fields` directly.
 - `into` must point to a new field. If the target field already exists, the transform fails instead of overwriting it.
-- Set `required: true` when missing inputs should fail the request. For `coalesce`, missing, `null`, and empty-string values are treated as empty, but whitespace-only strings, `0`, and `false` still count as present values.
-- `remove_source: true` works for both `combine` and `coalesce`.
+- Set `required: true` when missing inputs should fail the request. That check is full-path strict: if any parent segment or leaf target is missing, the request fails instead of silently skipping the control. For `coalesce`, missing, `null`, and empty-string values are treated as empty, but whitespace-only strings, `0`, and `false` still count as present values.
+- `remove_source: true` works for both `combine` and `coalesce`. Use `delete` when you want an explicit cleanup step later in the control pipeline.
 - If the matched payload is an array, the full control pipeline runs against each matching object element in order. Non-object elements are skipped.
 
 ## Nested Paths
@@ -145,6 +168,21 @@ controls:
 ```json
 { "full_name": "Jane Doe", "email": "jane@example.com" }
 ```
+
+If you prefer to keep the cleanup as a separate ordered step, use `delete` after the transform:
+
+```yaml
+controls:
+  - type: combine
+    fields: [first_name, last_name]
+    into: full_name
+    separator: " "
+
+  - type: delete
+    fields: [first_name, last_name]
+```
+
+Use `delete` when the field should disappear completely. Use `redact` when the field should remain present but its value should be blanked or masked.
 
 ## Next steps
 

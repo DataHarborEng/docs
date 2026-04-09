@@ -56,9 +56,11 @@ An agent card is a machine-readable description of your agent's capabilities, fo
 | Field | Description |
 |---|---|
 | **Name and description** | From your Virtual API configuration |
-| **Skills** | Auto-generated from your API's endpoints and schema |
+| **Skills** | Auto-generated from your API's endpoints and current control configuration |
 | **Security schemes** | OAuth requirements (Private only) |
 | **Extended card URL** | Link to full details (Private only) |
+
+Generated skill descriptions reflect the final governed shape of your Virtual API. For example, transform-only pipelines are described as transformed data rather than raw access, and cleanup controls like `delete` do not expose removed fields as public capabilities.
 
 ### Stub vs. full card
 

@@ -16,16 +16,17 @@ Detailed reference for all Control Block types and their options.
 | Rule | Behavior |
 |------|----------|
 | Ordering | Controls execute top-to-bottom |
-| Path syntax | Use dot notation, with array segments like `"[contacts].email"`. Slash notation is not supported in v0.3. |
+| Path syntax | Use dot notation, with array segments like `"[contacts].email"`. Slash notation is not supported. |
 | Filter targets | `redact`, `tokenize`, `anonymize`, `mask`, `hash`, and `allow` require scalar targets (`string`, `number`, or `bool`) |
 | Root arrays | If the matched payload is an array, controls apply to each object element automatically. Non-object elements are skipped. |
+| Required semantics | `required: true` is full-path strict. Missing any intermediate parent or final target fails the request. |
 
 ## Common Options
 
 | Option | Applies to | Required | Description |
 |--------|------------|----------|-------------|
 | `fields` | All controls | Yes | Field paths to operate on |
-| `required` | All controls | No | When `true`, missing referenced fields fail instead of being skipped. For `coalesce`, all fields missing or empty also fails. |
+| `required` | All controls | No | When `true`, missing referenced fields fail instead of being skipped. That includes missing intermediate parent paths, not just the final field. For `coalesce`, all fields missing or empty also fails. |
 | `into` | `combine`, `coalesce` | Yes | Target field for the transformed value |
 | `separator` | `combine` | No | Separator inserted between combined string values. Default: `""` |
 | `remove_source` | `combine`, `coalesce` | No | Remove the source fields after the transform completes. Default: `false` |
@@ -46,6 +47,7 @@ Remove sensitive data entirely.
 - Numbers → `0`
 - Booleans → `false`
 - Objects and arrays are invalid targets
+- The key remains in the output. If you want to remove the field entirely, use [`delete`](#delete) instead.
 
 ```yaml
 - type: redact
@@ -217,6 +219,27 @@ Select first non-empty value.
     - work_phone
     - home_phone
   into: primary_phone
+```
+
+---
+
+### delete
+
+Remove fields entirely from the outbound payload.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `type` | string | Yes | Must be `delete` |
+| `fields` | array | Yes | Fields to remove |
+
+`delete` does not support `into`. When you use nested paths, all entries in `fields` must share the same parent path. This keeps cleanup operations predictable for nested objects and arrays.
+
+```yaml
+- type: delete
+  fields:
+    - first_name
+    - last_name
+    - internal_note
 ```
 
 ---
