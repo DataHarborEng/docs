@@ -28,7 +28,7 @@ Every Virtual API with MCP delivery enabled gets a lease-scoped MCP URL:
 https://service.dataharbor.co/{leaseId}/mcp
 ```
 
-Point any MCP client at this URL when you want to work inside one specific governed Virtual API. OAuth authentication is required.
+Point any MCP client at this URL when you want to work inside one specific governed Virtual API. This is the lease-targeted MCP surface: you are already inside a single Virtual API, not browsing the wider platform. OAuth authentication is required.
 
 ### Platform discovery MCP
 
@@ -38,7 +38,7 @@ DataHarbor also exposes a platform discovery endpoint:
 https://service.dataharbor.co/mcp
 ```
 
-Use this endpoint when you want to discover available Virtual APIs across DataHarbor before connecting to a specific one.
+Use this endpoint when you want to discover available Virtual APIs across DataHarbor before connecting to a specific one. This is the platform lobby, not the lease-targeted working surface.
 
 - Anonymous sessions get a narrow, discovery-only tool surface.
 - Authenticated sessions can inspect richer platform metadata.
@@ -77,29 +77,40 @@ https://service.dataharbor.co/mcp
 
 ## Lease-scoped tools
 
-When you connect to a specific Virtual API endpoint, DataHarbor automatically generates MCP tools based on that Virtual API's schema:
+When you connect to a specific Virtual API endpoint, DataHarbor exposes a small lease-scoped tool surface for that one governed Virtual API.
 
-These tool names are generated from the governed shape of your specific Virtual API, so the exact tool list varies by lease.
+Today, a direct lease session exposes:
 
 | Tool | Description |
 |------|-------------|
-| `read_customers` | Fetch all records |
-| `search_customers` | Search by field values |
-| `get_customer` | Fetch a single record by ID |
-| `filter_customers` | Apply filters (equals, contains, range) |
+| `describe_schema` | Describe the governed lease-visible surface for the current Virtual API, including route context, named visible fields, derived fields, and geofence restrictions |
+| Lease-specific data tool | Fetch governed data from the current Virtual API. The tool name is derived from the Virtual API title, so it varies by lease |
+
+The lease-specific data tool uses the current Virtual API's configured route template. If the backing route exposes path parameters, those parameters become MCP tool inputs.
+
+`describe_schema` is intentionally privacy-bounded:
+
+- It describes the governed lease surface, not the full backing API schema.
+- Redacted field names may still appear when the lease explicitly exposes them.
+- Deleted fields are omitted.
+- It does not expose Broker explored-model detail or hidden annotations.
 
 ### Example conversation
 
 ```
-User: Find customers in California with balance over $1000
+User: Describe what this Virtual API exposes.
 
-Claude: I'll search the customer database for you.
-[Calling search_customers with filters: state=CA, balance>1000]
+Claude: I'll inspect the governed lease surface first.
+[Calling describe_schema]
 
-Found 23 customers matching your criteria:
-- tok_abc123 (email tokenized) - Balance: $2,450
-- tok_def456 (email tokenized) - Balance: $1,890
-...
+This Virtual API exposes customer records through `/v1/customers/{customerId}`.
+Visible fields include `email` (redacted) and `full_name` (derived, hashed).
+Requests are restricted to `US`.
+
+User: Pull customer 123.
+
+Claude: I'll use the lease-scoped data tool for that Virtual API.
+[Calling the lease-specific data tool with `customerId=123`]
 ```
 
 The AI sees tokenized/redacted data — never the raw values.
