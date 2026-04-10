@@ -19,6 +19,7 @@ Detailed reference for all Control Block types and their options.
 | Path syntax | Use dot notation, with array segments like `"[contacts].email"`. Slash notation is not supported. |
 | Filter targets | `redact`, `tokenize`, `anonymize`, `mask`, `hash`, and `allow` require scalar targets (`string`, `number`, or `bool`) |
 | Root arrays | If the matched payload is an array, controls apply to each object element automatically. Non-object elements are skipped. |
+| Array failure behavior | Array execution is not transactional across elements. If an earlier element succeeds and a later element fails a `required` check, the request fails and earlier element changes are not rolled back. |
 | Required semantics | `required: true` is full-path strict. Missing any intermediate parent or final target fails the request. |
 
 ## Common Options

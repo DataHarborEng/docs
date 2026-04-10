@@ -110,6 +110,7 @@ controls:
 - Set `required: true` when missing inputs should fail the request. That check is full-path strict: if any parent segment or leaf target is missing, the request fails instead of silently skipping the control. For `coalesce`, missing, `null`, and empty-string values are treated as empty, but whitespace-only strings, `0`, and `false` still count as present values.
 - `remove_source: true` works for both `combine` and `coalesce`. Use `delete` when you want an explicit cleanup step later in the control pipeline.
 - If the matched payload is an array, the full control pipeline runs against each matching object element in order. Non-object elements are skipped.
+- Array execution is not transactional across elements. If an earlier element has already been transformed and a later element fails a `required` check, the request still fails, but the earlier successful element changes are not rolled back.
 
 ## Nested Paths
 

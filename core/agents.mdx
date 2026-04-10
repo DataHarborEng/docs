@@ -5,7 +5,7 @@ description: Control how your Virtual APIs are discovered and accessed by AI age
 
 # Agent/MCP Visibility
 
-**From private to fully public — one setting.**
+**From private to publicly discoverable — one setting.**
 
 Every Virtual API can be exposed as an AI agent endpoint via the [Model Context Protocol (MCP)](/delivery/mcp-server). The **Visibility** setting controls who can discover your agent, whether authentication is required, and whether it appears in the DataHarbor catalog.
 
@@ -13,12 +13,12 @@ Every Virtual API can be exposed as an AI agent endpoint via the [Model Context 
 
 Visibility is a single, escalating setting — each level opens access further:
 
-| Visibility | Agent Card | Catalog | MCP Auth | Description |
+| Visibility | Agent Card | Catalog | Lease MCP Auth | Description |
 |---|---|---|---|---|
 | **Disabled** | Not served | No | N/A | Not an agent. Nobody can discover or connect to it. |
-| **Private** | Auth only | No | Required | Only authenticated clients can find and use it. Internal use only. |
-| **Unlisted Open** | Public | No | Open | Anyone with the link can use it freely, but it won't appear in the catalog. |
-| **Listed Open** | Public | Yes | Open | Fully public — discoverable in the catalog, open to all. |
+| **Private** | Auth only | No | Required | Only authenticated clients can find and use it directly. Internal use only. |
+| **Unlisted Open** | Public | No | Required | Anyone with the link can discover it, but it won't appear in the catalog and direct lease MCP still requires auth. |
+| **Listed Open** | Public | Yes | Required | Publicly discoverable in the catalog and registry, while direct lease MCP still requires auth. |
 
 ### Disabled
 
@@ -36,7 +36,7 @@ MCP sessions require OAuth authentication.
 
 ### Unlisted Open
 
-The agent card is fully public with no security schemes — anyone can read it and connect without authentication. However, the agent does not appear in the DataHarbor catalog.
+The agent card is fully public with no security schemes — anyone with the link can inspect the public discovery metadata. However, the agent does not appear in the DataHarbor catalog, and the lease-scoped MCP endpoint still requires authentication.
 
 This is ideal for:
 - Embedding agents in specific applications
@@ -45,7 +45,7 @@ This is ideal for:
 
 ### Listed Open
 
-Like Unlisted Open, but the agent is indexed in the DataHarbor catalog and fully discoverable. This is the most open setting — anyone can find it, connect, and use it without authentication.
+Like Unlisted Open, but the agent is indexed in the DataHarbor catalog and registry. This is the most open discovery setting — anyone can find it, inspect the public metadata, and begin from the platform discovery surface, while direct lease MCP still requires authentication.
 
 ## Agent cards
 
@@ -90,6 +90,8 @@ Virtual APIs with **Listed Open** visibility are indexed in the DataHarbor regis
 - **Registry catalog**: [https://service.dataharbor.co/registry](https://service.dataharbor.co/registry)
 - **OpenAPI spec** (with query information): [https://service.dataharbor.co/openapi/v1.json](https://service.dataharbor.co/openapi/v1.json)
 
+For MCP-native discovery, clients can also start at `https://service.dataharbor.co/mcp`. The anonymous relay surface is intentionally limited to discovery-oriented tools.
+
 ## Choosing a visibility level
 
 | Scenario | Recommended |
@@ -97,7 +99,7 @@ Virtual APIs with **Listed Open** visibility are indexed in the DataHarbor regis
 | Not using MCP delivery | Disabled |
 | Internal agents for your own AI tools | Private |
 | Sharing an agent with a specific partner | Unlisted Open |
-| Publishing an agent for anyone to use | Listed Open |
+| Publishing an agent for public discovery | Listed Open |
 
 ## Next steps
 

@@ -7,7 +7,7 @@ description: Turn any Virtual API into a governed MCP endpoint for AI agent cons
 
 **Governed AI data access. No separate security model.**
 
-Turn any Virtual API into a governed MCP (Model Context Protocol) endpoint for AI agent consumption. A single URL — that's all you need to connect Claude, ChatGPT, or any MCP client.
+Turn any Virtual API into a governed MCP (Model Context Protocol) endpoint for AI agent consumption. DataHarbor gives you two MCP entry points: one to connect directly to a specific Virtual API, and one to discover the broader DataHarbor catalog.
 
 ## How it works
 
@@ -18,19 +18,46 @@ AI agents inherit the same controls as any other consumer:
 
 No separate security model for AI.
 
-## MCP endpoint
+## MCP endpoints
 
-Every Virtual API with MCP delivery enabled gets an MCP URL:
+### Direct Virtual API MCP
 
-```
+Every Virtual API with MCP delivery enabled gets a lease-scoped MCP URL:
+
+```text
 https://service.dataharbor.co/{leaseId}/mcp
 ```
 
-Point any MCP client at this URL — authentication is handled automatically via OAuth discovery.
+Point any MCP client at this URL when you want to work inside one specific governed Virtual API. OAuth authentication is required.
+
+### Platform discovery MCP
+
+DataHarbor also exposes a platform discovery endpoint:
+
+```text
+https://service.dataharbor.co/mcp
+```
+
+Use this endpoint when you want to discover available Virtual APIs across DataHarbor before connecting to a specific one.
+
+- Anonymous sessions get a narrow, discovery-only tool surface.
+- Authenticated sessions can inspect richer platform metadata.
+- Once you choose a specific Virtual API, connect to its lease-scoped MCP URL for direct use.
+
+### Current platform discovery tools
+
+The platform discovery surface is intentionally small. Today, `https://service.dataharbor.co/mcp` exposes:
+
+| Tool | Availability | What it does |
+|------|--------------|--------------|
+| `search_registry` | Anonymous and authenticated sessions | Search the DataHarbor registry for listed Virtual APIs and discovery metadata |
+| `get_virtual_api_info` | Authenticated sessions | Retrieve richer information about a specific Virtual API after you know which one you want to inspect |
+
+This tool surface is product-defined and stable enough to document directly.
 
 ### Connect from Claude Desktop
 
-Add to your Claude Desktop configuration:
+Add a specific Virtual API to your Claude Desktop configuration:
 
 ```json
 {
@@ -42,9 +69,17 @@ Add to your Claude Desktop configuration:
 }
 ```
 
-## Auto-generated tools
+To start with platform discovery instead, point your MCP client at:
 
-DataHarbor automatically generates MCP tools based on your Virtual API schema:
+```text
+https://service.dataharbor.co/mcp
+```
+
+## Lease-scoped tools
+
+When you connect to a specific Virtual API endpoint, DataHarbor automatically generates MCP tools based on that Virtual API's schema:
+
+These tool names are generated from the governed shape of your specific Virtual API, so the exact tool list varies by lease.
 
 | Tool | Description |
 |------|-------------|

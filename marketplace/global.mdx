@@ -20,11 +20,19 @@ Publish governed Virtual APIs for discovery — free or per-request — with pri
 
 The registry is the machine-readable index of all listed agents. It's live today:
 
-```
+```text
 https://service.dataharbor.co/registry
 ```
 
 AI agents query the registry to discover governed endpoints ready for instant connection. Every Virtual API with **Listed Open** [visibility](/core/agents#listed-open) is automatically indexed.
+
+For MCP-native discovery, clients can also start at:
+
+```text
+https://service.dataharbor.co/mcp
+```
+
+The platform MCP endpoint is a discovery surface, not an anonymous data-access surface. Anonymous sessions can browse a narrow set of discovery tools, then configure auth when they want richer metadata or direct access to a specific Virtual API.
 
 ## How it works
 
@@ -35,7 +43,7 @@ AI agents query the registry to discover governed endpoints ready for instant co
 
 ## Visibility requirement
 
-Only Virtual APIs with **Listed Open** visibility appear in the Global Marketplace. This is the most open discovery setting — the agent card and registry listing are public, and the current relay endpoint still requires a marketplace key for data access.
+Only Virtual APIs with **Listed Open** visibility appear in the Global Marketplace. This is the most open discovery setting — the agent card and registry listing are public, while runtime access still requires credentials such as marketplace keys for relay access or authentication for lease-scoped MCP.
 
 | Visibility | In Registry | In Catalog |
 |---|---|---|
