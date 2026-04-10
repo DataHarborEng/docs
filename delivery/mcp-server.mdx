@@ -83,28 +83,29 @@ Today, a direct lease session exposes:
 
 | Tool | Description |
 |------|-------------|
-| `describe_schema` | Describe the governed lease-visible surface for the current Virtual API, including route context, named visible fields, derived fields, and geofence restrictions |
+| `describe_schema` | Describe the effective governed contract for the current Virtual API, including route context, named visible fields, pass-through fields observed by DataHarbor, derived fields, and geofence restrictions |
 | Lease-specific data tool | Fetch governed data from the current Virtual API. The tool name is derived from the Virtual API title, so it varies by lease |
 
 The lease-specific data tool uses the current Virtual API's configured route template. If the backing route exposes path parameters, those parameters become MCP tool inputs.
 
 `describe_schema` is intentionally privacy-bounded:
 
-- It describes the governed lease surface, not the full backing API schema.
+- It describes the lease-owned effective contract, not the full raw backing API schema.
+- Unchanged pass-through fields may appear when DataHarbor has observed them in the backing schema inventory.
 - Redacted field names may still appear when the lease explicitly exposes them.
 - Deleted fields are omitted.
-- It does not expose Broker explored-model detail or hidden annotations.
+- It does not expose raw explored-model documents, hidden annotations, or fields removed by lease controls.
 
 ### Example conversation
 
 ```
 User: Describe what this Virtual API exposes.
 
-Claude: I'll inspect the governed lease surface first.
+Claude: I'll inspect the governed lease contract first.
 [Calling describe_schema]
 
 This Virtual API exposes customer records through `/v1/customers/{customerId}`.
-Visible fields include `email` (redacted) and `full_name` (derived, hashed).
+Visible fields include pass-through field `customer_id`, `email` (redacted), and `full_name` (derived, hashed).
 Requests are restricted to `US`.
 
 User: Pull customer 123.
