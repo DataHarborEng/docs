@@ -15,6 +15,7 @@ The standard delivery mechanism for Virtual APIs. The current runtime exposes le
 |---|---|---|
 | Authenticated fetch | `/fetch/{leaseId}/{path}` | `dataHarbor-api-key` |
 | Marketplace relay | `/relay/{leaseId}/{path}` | `dataHarbor-api-key: mkp_...` |
+| Org authorization relay | `/relay/{leaseId}/{path}` | `dataHarbor-api-key: mkp_...` (authorized org's key) |
 
 `fetch` is the standard authenticated path for a Virtual API. `relay` is reserved for Virtual APIs with `Unlisted Open` or `Listed Open` visibility, and the current runtime still requires a marketplace API key on relay requests.
 
@@ -37,6 +38,17 @@ You can create a marketplace key from the account settings page in DataHarbor.
 curl -H "dataHarbor-api-key: mkp_your_marketplace_key" \
   https://service.dataharbor.co/relay/166d4e26-3d40-4e44-806a-e56b93ebb121/customers
 ```
+
+## Organization authorization relay
+
+When a lease owner [authorizes an organization](/core/api-access#organization-authorizations), that organization's existing marketplace key (`mkp_...`) works on the relay endpoint for the authorized Virtual API. No additional keys or auth types are needed.
+
+```bash
+curl -H "dataHarbor-api-key: mkp_partner_marketplace_key" \
+  https://service.dataharbor.co/relay/166d4e26-3d40-4e44-806a-e56b93ebb121/customers
+```
+
+Usage counts against the **consuming organization's** marketplace quota, not the lease owner's. See [Organization Authorizations](/core/api-access#organization-authorizations) for details.
 
 ## Response shape
 

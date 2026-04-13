@@ -21,7 +21,7 @@ Publish governed Virtual APIs for discovery — free or per-request — with pri
 The registry is the machine-readable index of all listed agents. It's live today:
 
 ```text
-https://service.dataharbor.co/registry
+https://service.dataharbor.co/api/registry/search
 ```
 
 AI agents query the registry to discover governed endpoints ready for instant connection. Every Virtual API with **Listed Open** [visibility](/core/agents#listed-open) is automatically indexed.
@@ -39,7 +39,8 @@ The platform MCP endpoint is a discovery surface, not an anonymous data-access s
 1. **Create a Virtual API** — Define your source, apply privacy controls, and set access rules.
 2. **Set visibility to Listed Open** — Your Virtual API must have [Listed Open](/core/agents#listed-open) visibility to appear in the registry and catalog.
 3. **Buyers discover and connect** — Buyers browse listings, preview schemas, see governance policies, create a marketplace key from the account settings page, and connect.
-4. **Access flows through controls** — Every request goes through your Virtual API's governance. Usage is metered, logged, and auditable. Revoke anytime.
+4. **Authorize specific organizations** — As an alternative to public listing, data owners can authorize specific partner organizations for direct relay access via [Organization Authorizations](/core/api-access#organization-authorizations). Authorized orgs use their existing marketplace key — no new credentials required.
+5. **Access flows through controls** — Every request goes through your Virtual API's governance. Usage is metered, logged, and auditable. Revoke anytime.
 
 ## Visibility requirement
 
@@ -79,6 +80,7 @@ Every marketplace consumer is bound by your Virtual API's controls:
 - Privacy controls (tokenization, redaction) are enforced on every call
 - Access controls (geo restrictions, expiration) apply
 - Marketplace relay requests use marketplace keys (`mkp_...`)
+- Organization authorization relay usage is billed against the consuming organization's marketplace quota — not the data owner's
 - Usage is metered, logged, and auditable
 - Revocation is instant
 

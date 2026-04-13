@@ -11,9 +11,14 @@ Every Virtual API is accessible over REST. How consumers connect depends on the 
 
 | Visibility | Endpoint | Auth | Registry |
 |---|---|---|---|
-| **Disabled** / **Private** | `/fetch/{leaseId}/{path}` | API key required | No |
+| **Disabled** | `/fetch/{leaseId}/{path}` | API key required | No |
+| **Private** | `/fetch/{leaseId}/{path}` | API key required | No |
 | **Unlisted Open** | `/relay/{leaseId}/{path}` | Marketplace key required | No |
 | **Listed Open** | `/relay/{leaseId}/{path}` | Marketplace key required | Yes — discoverable in catalog |
+
+<Info>
+  **Private** Virtual APIs can also be accessed via the relay endpoint when the consuming organization has been authorized by the lease owner. See [Organization Authorizations](#organization-authorizations) below.
+</Info>
 
 ## Private access (fetch)
 
@@ -57,6 +62,33 @@ curl -H "dataHarbor-api-key: mkp_your_marketplace_key" \
 </Tip>
 
 **Unlisted Open** is ideal for partner-specific sharing. **Listed Open** goes further: your Virtual API appears in the DataHarbor registry and catalog, making it discoverable while still routing requests through marketplace-key enforcement.
+
+## Organization Authorizations
+
+Lease owners can authorize specific partner organizations for relay access to their Virtual API — regardless of visibility level. This enables controlled sharing without making the Virtual API publicly discoverable.
+
+### How it works
+
+1. **Authorize access** — The lease owner adds a partner organization by org ID from the **Marketplace Management** tab on the Virtual API detail page.
+2. **Partner connects** — The authorized organization uses their existing marketplace key (`mkp_...`) on the relay endpoint. No new keys or auth types are needed.
+3. **Usage is billed to the consumer** — Relay usage through an org authorization is billed against the **consuming organization's** marketplace quota, not the lease owner's.
+
+```bash
+# Partner org uses their existing marketplace key
+curl -H "dataHarbor-api-key: mkp_partner_marketplace_key" \
+  https://service.dataharbor.co/relay/b097a4d3-44e6-4490-9f03-104f4d636e20/customers
+```
+
+### Key details
+
+- **No new credentials** — Partners reuse their existing marketplace key. No additional keys or auth types are introduced.
+- **Any visibility tier** — Org authorizations work for Private, Unlisted Open, and Listed Open Virtual APIs. A Private lease with org authorizations is accessible via relay only to authorized organizations.
+- **Instant revocation** — Authorizations can be revoked at any time from the Marketplace Management tab. Access is removed immediately.
+- **Governance still applies** — All data controls, geo restrictions, expiration, and audit logging are enforced on org authorization relay requests.
+
+<Tip>
+  Organization authorizations are orthogonal to visibility. A **Private** Virtual API with org authorizations is not discoverable in the registry or catalog — only explicitly authorized organizations can access it via relay.
+</Tip>
 
 ## Registry
 
