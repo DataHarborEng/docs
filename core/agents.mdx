@@ -51,6 +51,20 @@ Like Unlisted Open, but the agent is indexed in the DataHarbor catalog and regis
 
 An agent card is a machine-readable description of your agent's capabilities, following the [Model Context Protocol](https://modelcontextprotocol.io) spec. DataHarbor generates it automatically from your Virtual API configuration.
 
+Every Virtual API with a non-disabled visibility serves its agent card at:
+
+```text
+https://service.dataharbor.co/{virtualApiId}/.well-known/agent-card.json
+```
+
+For **Private** Virtual APIs, the public card includes a capability flag that directs A2A clients to fetch the extended card after authenticating:
+
+```text
+https://service.dataharbor.co/{virtualApiId}/extendedAgentCard
+```
+
+The extended card includes richer metadata such as skill-level field details, lease expiration, and filter configuration that is only appropriate for authenticated consumers.
+
 ### What's in an agent card
 
 | Field | Description |
