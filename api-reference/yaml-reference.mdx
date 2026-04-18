@@ -12,7 +12,7 @@ This page documents the current v0.3 Virtual API Configuration that the runtime 
 ```yaml
 version: "0.3"
 input_format: json
-output_format: markdown
+default_output_format: markdown
 failOnUnmatchedObject: false
 useStrictNameMatching: true
 
@@ -36,7 +36,7 @@ objects:
 |-----|------|-------------|
 | `version` | string | Use `"0.3"` for the current controls pipeline |
 | `input_format` | string | Optional. Expected upstream format. Values: `json`. Auto-detected if omitted |
-| `output_format` | string | Optional. Desired response format. Values: `json`, `markdown`. Preserves input format if omitted |
+| `default_output_format` | string | Optional. Desired response format. Values: `json`, `markdown`, `csv`, `yaml`. Preserves input format if omitted |
 | `objects` | mapping | Named object definitions keyed by route segment |
 | `objects.<name>.controls` | array | Ordered list of control blocks for that object |
 | `objects._default` | object | Catch-all object definition used only when no named object matches |
