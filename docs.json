@@ -52,6 +52,7 @@
             "group": "Delivery",
             "pages": [
               "delivery/rest-api",
+              "delivery/output-formatting",
               "delivery/mcp-server",
               "delivery/data-lake"
             ]

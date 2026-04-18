@@ -1,0 +1,203 @@
+---
+title: Output Formatting
+description: Convert Virtual API responses to agent-friendly formats like Markdown — no client-side post-processing needed.
+---
+
+# Output Formatting
+
+**JSON in, Markdown out. Zero client code.**
+
+Virtual API responses are JSON by default. Output formatting lets you convert responses to Markdown (or preserve JSON explicitly) — configured in your Virtual API Configuration or requested via URL extension. Especially useful for AI agents that present data to humans.
+
+<Info>
+  Output formatting runs **after** all privacy controls and data transforms. Your controls pipeline is unchanged — formatting just converts the final result.
+</Info>
+
+## Quick start
+
+Add `output_format` to any Virtual API Configuration:
+
+```yaml
+version: "0.3"
+output_format: markdown
+objects:
+  customers:
+    controls:
+      - type: redact
+        fields: [ssn]
+      - type: tokenize
+        fields: [email]
+```
+
+Every response from this Virtual API is now Markdown instead of JSON.
+
+## Configuration
+
+Two optional top-level fields control formatting:
+
+| Field | Values | Default | Description |
+|-------|--------|---------|-------------|
+| `input_format` | `json` | Auto-detected from upstream `Content-Type` | Declare the expected upstream format |
+| `output_format` | `json`, `markdown` | *(omitted — preserve input format)* | Declare the desired response format |
+
+Both fields are completely optional. Omitting them preserves the current behavior — JSON in, JSON out.
+
+```yaml
+version: "0.3"
+input_format: json
+output_format: markdown
+objects:
+  _default:
+    controls:
+      - type: allow
+        fields: [name, description, status]
+```
+
+<Tip>
+  `input_format` is rarely needed. DataHarbor auto-detects JSON from the upstream `Content-Type` header. Only set it when the upstream API returns a non-standard content type.
+</Tip>
+
+### Setting `output_format: json`
+
+You can explicitly set `output_format: json` to signal that the response should remain JSON. This is a passthrough — no conversion happens. It's useful for documentation clarity or when you want to be explicit about the contract.
+
+## URL extension format
+
+Append `.md` or `.json` to any data endpoint URL to request a specific output format without changing the Virtual API Configuration:
+
+```bash
+# Markdown output
+curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+  https://service.dataharbor.co/fetch/b097a4d3/customers.md
+
+# Explicit JSON output
+curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+  https://service.dataharbor.co/fetch/b097a4d3/customers.json
+```
+
+This works on both `/fetch/` and `/relay/` endpoints.
+
+### Precedence
+
+The Virtual API Configuration always wins:
+
+| `output_format` in spec | URL extension | Result |
+|------------------------|---------------|--------|
+| `markdown` | `.json` | **Markdown** — spec wins |
+| `json` | `.md` | **JSON** — spec wins |
+| *(omitted)* | `.md` | **Markdown** — URL extension applies |
+| *(omitted)* | `.json` | **JSON** — URL extension applies |
+| *(omitted)* | *(none)* | **JSON** — default behavior |
+
+## Markdown rendering
+
+DataHarbor uses **structure-driven rendering** — it inspects the shape of the JSON and picks the best Markdown representation automatically.
+
+### Array of objects → Table
+
+```json
+[
+  { "name": "Alice", "role": "Admin", "status": "active" },
+  { "name": "Bob", "role": "Viewer", "status": "inactive" }
+]
+```
+
+```markdown
+| name | role | status |
+|---|---|---|
+| Alice | Admin | active |
+| Bob | Viewer | inactive |
+```
+
+### Single object → Key-value list
+
+```json
+{ "name": "Alice", "email": "tok_abc123", "role": "Admin" }
+```
+
+```markdown
+**name:** Alice
+**email:** tok_abc123
+**role:** Admin
+```
+
+### Nested object → Headers + structure
+
+```json
+{
+  "user": {
+    "name": "Alice",
+    "address": { "city": "Portland", "state": "OR" }
+  },
+  "orders": [
+    { "id": 1, "total": 25.00 },
+    { "id": 2, "total": 42.50 }
+  ]
+}
+```
+
+```markdown
+## user
+
+**name:** Alice
+
+### address
+
+**city:** Portland
+**state:** OR
+
+## orders
+
+| id | total |
+|---|---|
+| 1 | 25 |
+| 2 | 42.5 |
+```
+
+### Rendering rules
+
+| JSON shape | Markdown representation |
+|---|---|
+| Array of flat objects | Table with column headers from keys |
+| Single flat object | Key-value list |
+| Nested object | Hierarchical headers + nested content |
+| Array of scalars | Bulleted list |
+| Scalar value | Plain text |
+
+## Response headers
+
+When output formatting converts to Markdown, the response `Content-Type` changes:
+
+| Output format | Content-Type |
+|---|---|
+| JSON (default) | `application/json` |
+| Markdown | `text/markdown; charset=utf-8` |
+
+## Works everywhere
+
+Output formatting is applied in the data pipeline, so every delivery mechanism benefits automatically:
+
+- **REST API** — `/fetch/` and `/relay/` endpoints return formatted responses
+- **MCP Server** — AI agents receive Markdown directly from their data tools
+- **URL extensions** — Append `.md` for quick Markdown access from `curl` or scripts
+
+## Pipeline position
+
+Formatting runs as the **last step** before the response is returned:
+
+```
+Upstream API → Authenticate → Authorize → Fetch → Apply Controls → Output Format → Respond
+```
+
+Your privacy controls and data transforms execute first on the original JSON. The formatted output reflects the fully governed, transformed data.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="MCP Server Delivery" icon="robot" href="/delivery/mcp-server">
+    AI agent access with governed data
+  </Card>
+  <Card title="Data Control" icon="shield" href="/control-blocks/data-control">
+    Field-level privacy controls
+  </Card>
+</CardGroup>

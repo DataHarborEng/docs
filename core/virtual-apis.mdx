@@ -188,11 +188,14 @@ objects:
 
 | Option | Default | Description |
 |---|---|---|
+| `input_format` | Auto-detected | Expected upstream format. Values: `json` |
+| `output_format` | *(preserve input)* | Desired response format. Values: `json`, `markdown` |
 | `failOnUnmatchedObject` | `false` | Reject requests that don't match any defined object |
 | `useStrictNameMatching` | `true` | When `false`, match field names case-insensitively |
 
 ```yaml
 version: "0.3"
+output_format: markdown
 failOnUnmatchedObject: true
 objects:
   addresses:
@@ -200,6 +203,10 @@ objects:
       - type: redact
         fields: [name]
 ```
+
+<Tip>
+  Set `output_format: markdown` to make every response from this Virtual API agent-friendly. You can also request Markdown per-request by appending `.md` to the URL. See [Output Formatting](/delivery/output-formatting) for details.
+</Tip>
 
 ## Versioning
 

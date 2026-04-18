@@ -65,6 +65,22 @@ DataHarbor preserves your upstream response shape and applies controls in order 
 ]
 ```
 
+### Output format via URL extension
+
+Append `.md` or `.json` to any endpoint path to request a specific output format:
+
+```bash
+# Markdown table — great for agents and quick inspection
+curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+  https://service.dataharbor.co/fetch/b097a4d3/customers.md
+
+# Explicit JSON (default behavior)
+curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+  https://service.dataharbor.co/fetch/b097a4d3/customers.json
+```
+
+If the Virtual API Configuration specifies `output_format`, that always takes precedence over the URL extension. See [Output Formatting](/delivery/output-formatting) for details.
+
 ## Request/response flow
 
 Every request passes through the governance layer:
@@ -73,7 +89,8 @@ Every request passes through the governance layer:
 2. **Authorize** — Check access controls (geo, IP, expiration)
 3. **Fetch** — Call upstream source
 4. **Apply controls** — Run the ordered control pipeline (redact, tokenize, transform)
-5. **Respond** — Return governed data
+5. **Format** — Convert output if `output_format` is configured or a URL extension is present
+6. **Respond** — Return governed data
 
 ## Example integration
 
@@ -95,10 +112,10 @@ const customers = await response.json();
 ## Next steps
 
 <CardGroup cols={2}>
+  <Card title="Output Formatting" icon="file-lines" href="/delivery/output-formatting">
+    Convert responses to Markdown
+  </Card>
   <Card title="MCP Server Delivery" icon="robot" href="/delivery/mcp-server">
     Enable AI agent access
-  </Card>
-  <Card title="Access Control" icon="lock" href="/control-blocks/access-control">
-    Configure geo restrictions and expiration
   </Card>
 </CardGroup>
