@@ -37,7 +37,7 @@ Two optional top-level fields control formatting:
 
 | Field | Values | Default | Description |
 |-------|--------|---------|-------------|
-| `input_format` | `json` | Auto-detected from upstream `Content-Type` | Declare the expected upstream format |
+| `input_format` | `json`, `csv`, `yaml`, `markdown` | Auto-detected from upstream `Content-Type` | Declare the expected upstream format |
 | `default_output_format` | `json`, `markdown`, `csv`, `yaml` | *(omitted — preserve input format)* | Declare the desired response format |
 
 Both fields are completely optional. Omitting them preserves the current behavior — JSON in, JSON out.
@@ -54,7 +54,7 @@ objects:
 ```
 
 <Tip>
-  `input_format` is rarely needed. DataHarbor auto-detects JSON from the upstream `Content-Type` header. Only set it when the upstream API returns a non-standard content type.
+  `input_format` is rarely needed. DataHarbor auto-detects the upstream format from the `Content-Type` header (`application/json`, `text/csv`, `text/yaml`, `application/yaml`, `text/markdown`). Only set it when the upstream API returns a non-standard content type that doesn't match the actual payload format.
 </Tip>
 
 ### Setting `default_output_format: json`
@@ -377,15 +377,144 @@ Output formatting is applied in the data pipeline, so every delivery mechanism b
 - **URL extensions** — Append `.md` for quick Markdown access from `curl` or scripts
 - **Accept header** — Clients negotiate their preferred format automatically via HTTP content negotiation
 
+## Input normalization
+
+DataHarbor's controls pipeline operates on a canonical JSON model internally. When the upstream API returns a non-JSON format, DataHarbor automatically normalizes it to JSON before controls run, then converts to your requested output format.
+
+```
+Upstream API → Normalize to JSON → Apply Controls → Output Format → Respond
+```
+
+This means you can enroll a CSV, YAML, or Markdown API, apply the same privacy controls and transforms, and deliver the result in any output format.
+
+### Supported input formats
+
+| Format | Content-Type | Normalized shape |
+|--------|-------------|-----------------|
+| JSON | `application/json`, `application/*+json` | Parsed directly — no conversion |
+| CSV | `text/csv` | Array of objects, one per row, keyed by header columns |
+| YAML | `text/yaml`, `application/yaml`, `application/x-yaml` | JSON-compatible subset: mappings, sequences, scalars |
+| Markdown | `text/markdown` | Document object with `content` and optional `frontmatter` |
+
+### CSV normalization
+
+CSV input is parsed as headered rectangular data. The first row defines the column names, and each subsequent row becomes a JSON object:
+
+```csv
+name,age,active
+Alice,30,true
+Bob,25,false
+```
+
+Normalizes to:
+
+```json
+[
+  { "name": "Alice", "age": 30, "active": true },
+  { "name": "Bob", "age": 25, "active": false }
+]
+```
+
+Type coercion is conservative: obvious booleans (`true`/`false`), integers, and decimals are converted. Everything else — dates, GUIDs, leading-zero identifiers — stays as a string.
+
+### YAML normalization
+
+YAML input is normalized using the JSON-compatible subset of YAML: mappings become objects, sequences become arrays, and scalars are coerced to strings, numbers, booleans, or null.
+
+```yaml
+name: Alice
+tags:
+  - admin
+  - owner
+active: true
+```
+
+Normalizes to:
+
+```json
+{
+  "name": "Alice",
+  "tags": ["admin", "owner"],
+  "active": true
+}
+```
+
+<Warning>
+  Advanced YAML constructs that don't map to JSON — anchors/aliases, tags, merge keys, multi-document streams, and non-finite floats (Infinity, NaN) — are rejected with a descriptive error. Only the JSON-compatible subset of YAML is supported.
+</Warning>
+
+### Markdown normalization
+
+Markdown is treated as a **document**, not structured data. The raw Markdown body is preserved as-is in a `content` field. When YAML front matter is present (a `---`-fenced block at the very start of the document), it is parsed into a `frontmatter` object.
+
+````markdown
+---
+title: API Guide
+tags:
+  - rest
+  - auth
+draft: false
+---
+# API Guide
+
+This guide covers authentication...
+````
+
+Normalizes to:
+
+```json
+{
+  "frontmatter": {
+    "title": "API Guide",
+    "tags": ["rest", "auth"],
+    "draft": false
+  },
+  "content": "# API Guide\n\nThis guide covers authentication..."
+}
+```
+
+When no front matter is present, the result is simply:
+
+```json
+{
+  "content": "# Hello World\n\nSome markdown content."
+}
+```
+
+Your controls can then target `content` or specific front matter fields like `frontmatter.title`.
+
+#### Front matter rules
+
+- Front matter must start at the very first line of the document with `---`
+- The closing fence can be `---` or `...`
+- The front matter block must be a YAML mapping (key-value pairs) — bare scalars or sequences are ignored
+- Malformed YAML in the front matter block is silently ignored — the document normalizes with `content` only
+- Horizontal rules (`---`) appearing later in the document body are not treated as front matter
+
+<Info>
+  Markdown normalization is document-oriented by design. DataHarbor does not infer structure from headings, lists, or tables — the raw Markdown body is preserved exactly as received.
+</Info>
+
+### Body sniffing
+
+When the upstream `Content-Type` header is missing or unrecognized and no `input_format` is declared, DataHarbor inspects the first 512 bytes of the response body to detect the format:
+
+- Starts with `{` or `[` → JSON
+- Two rows with matching comma-separated field counts → CSV
+- Starts with `---` or a `key:` mapping → YAML
+- Starts with `#` → Markdown
+
+If detection is inconclusive, DataHarbor defaults to JSON.
+
 ## Pipeline position
 
 Formatting runs as the **last step** before the response is returned:
 
 ```
-Upstream API → Authenticate → Authorize → Fetch → Apply Controls → Output Format → Respond
+Upstream API → Authenticate → Authorize → Fetch → Normalize → Apply Controls → Output Format → Respond
 ```
 
-Your privacy controls and data transforms execute first on the original JSON. The formatted output reflects the fully governed, transformed data.
+Your privacy controls and data transforms execute on the normalized JSON model. The formatted output reflects the fully governed, transformed data. When the upstream is already JSON, normalization is a zero-cost passthrough.
 
 ## Next steps
 
