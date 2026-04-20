@@ -53,6 +53,7 @@
             "pages": [
               "delivery/rest-api",
               "delivery/output-formatting",
+              "delivery/markdown",
               "delivery/mcp-server",
               "delivery/data-lake"
             ]

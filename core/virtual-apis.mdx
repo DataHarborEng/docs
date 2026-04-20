@@ -188,8 +188,8 @@ objects:
 
 | Option | Default | Description |
 |---|---|---|
-| `input_format` | Auto-detected | Expected upstream format. Values: `json` |
-| `default_output_format` | *(preserve input)* | Desired response format. Values: `json`, `markdown` |
+| `input_format` | Auto-detected | Expected upstream format. Values: `json`, `csv`, `yaml`, `markdown` |
+| `default_output_format` | `json` | Desired response format. Values: `json`, `markdown`, `csv`, `yaml` |
 | `failOnUnmatchedObject` | `false` | Reject requests that don't match any defined object |
 | `useStrictNameMatching` | `true` | When `false`, match field names case-insensitively |
 
@@ -205,8 +205,12 @@ objects:
 ```
 
 <Tip>
-  Set `default_output_format: markdown` to make every response from this Virtual API agent-friendly. You can also request Markdown per-request by appending `.md` to the URL. See [Output Formatting](/delivery/output-formatting) for details.
+  Set `default_output_format: markdown` to make every response from this Virtual API agent-friendly. You can also request Markdown per-request by appending `.md` to the URL. See [Output Formatting](../delivery/output-formatting) for details.
 </Tip>
+
+<Info>
+  If your upstream API serves Markdown, set `input_format: markdown` when the upstream `Content-Type` is missing or unreliable. See [Markdown](../delivery/markdown) for document-mode normalization, front matter rules, and limitations.
+</Info>
 
 ## Versioning
 

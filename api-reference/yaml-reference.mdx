@@ -35,8 +35,8 @@ objects:
 | Key | Type | Description |
 |-----|------|-------------|
 | `version` | string | Use `"0.3"` for the current controls pipeline |
-| `input_format` | string | Optional. Expected upstream format. Values: `json`. Auto-detected if omitted |
-| `default_output_format` | string | Optional. Desired response format. Values: `json`, `markdown`, `csv`, `yaml`. Preserves input format if omitted |
+| `input_format` | string | Optional. Expected upstream format. Values: `json`, `csv`, `yaml`, `markdown`. Auto-detected if omitted |
+| `default_output_format` | string | Optional. Desired response format. Values: `json`, `markdown`, `csv`, `yaml`. Returns JSON if omitted |
 | `objects` | mapping | Named object definitions keyed by route segment |
 | `objects.<name>.controls` | array | Ordered list of control blocks for that object |
 | `objects._default` | object | Catch-all object definition used only when no named object matches |

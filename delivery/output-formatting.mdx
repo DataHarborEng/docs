@@ -38,9 +38,9 @@ Two optional top-level fields control formatting:
 | Field | Values | Default | Description |
 |-------|--------|---------|-------------|
 | `input_format` | `json`, `csv`, `yaml`, `markdown` | Auto-detected from upstream `Content-Type` | Declare the expected upstream format |
-| `default_output_format` | `json`, `markdown`, `csv`, `yaml` | *(omitted — preserve input format)* | Declare the desired response format |
+| `default_output_format` | `json`, `markdown`, `csv`, `yaml` | *(omitted — JSON response)* | Declare the desired response format |
 
-Both fields are completely optional. Omitting them preserves the current behavior — JSON in, JSON out.
+Both fields are completely optional. Omitting them preserves the current runtime behavior — normalize to JSON internally, then return JSON unless you explicitly request another output format.
 
 ```yaml
 version: "0.3"
@@ -445,55 +445,11 @@ Normalizes to:
 
 ### Markdown normalization
 
-Markdown is treated as a **document**, not structured data. The raw Markdown body is preserved as-is in a `content` field. When YAML front matter is present (a `---`-fenced block at the very start of the document), it is parsed into a `frontmatter` object.
+Markdown input is handled in **document mode**. DataHarbor normalizes the payload into a JSON object with a `content` string and optional `frontmatter` object when YAML front matter is present.
 
-````markdown
----
-title: API Guide
-tags:
-  - rest
-  - auth
-draft: false
----
-# API Guide
+Your controls then target the normalized JSON model, such as `content` or `frontmatter.title`.
 
-This guide covers authentication...
-````
-
-Normalizes to:
-
-```json
-{
-  "frontmatter": {
-    "title": "API Guide",
-    "tags": ["rest", "auth"],
-    "draft": false
-  },
-  "content": "# API Guide\n\nThis guide covers authentication..."
-}
-```
-
-When no front matter is present, the result is simply:
-
-```json
-{
-  "content": "# Hello World\n\nSome markdown content."
-}
-```
-
-Your controls can then target `content` or specific front matter fields like `frontmatter.title`.
-
-#### Front matter rules
-
-- Front matter must start at the very first line of the document with `---`
-- The closing fence can be `---` or `...`
-- The front matter block must be a YAML mapping (key-value pairs) — bare scalars or sequences are ignored
-- Malformed YAML in the front matter block is silently ignored — the document normalizes with `content` only
-- Horizontal rules (`---`) appearing later in the document body are not treated as front matter
-
-<Info>
-  Markdown normalization is document-oriented by design. DataHarbor does not infer structure from headings, lists, or tables — the raw Markdown body is preserved exactly as received.
-</Info>
+See [Markdown](./markdown) for the full normalized shape, front matter rules, detection nuances, and limitations.
 
 ### Body sniffing
 
@@ -502,7 +458,7 @@ When the upstream `Content-Type` header is missing or unrecognized and no `input
 - Starts with `{` or `[` → JSON
 - Two rows with matching comma-separated field counts → CSV
 - Starts with `---` or a `key:` mapping → YAML
-- Starts with `#` → Markdown
+- Starts with valid front matter plus non-empty body, or starts with `#` → Markdown
 
 If detection is inconclusive, DataHarbor defaults to JSON.
 
