@@ -89,6 +89,13 @@ This works on both `/fetch/` and `/relay/` endpoints.
 
 DataHarbor supports HTTP content negotiation via the `Accept` header per [RFC 9110](https://httpwg.org/specs/rfc9110.html#field.accept). Clients can request a specific output format by including the appropriate media type:
 
+| Accept value | Output format |
+|---|---|
+| `application/json` | JSON |
+| `text/markdown` | Markdown |
+| `text/csv` | CSV |
+| `text/yaml` | YAML |
+
 ```bash
 # Request Markdown via Accept header
 curl -H "dataHarbor-api-key: YOUR_API_KEY" \
