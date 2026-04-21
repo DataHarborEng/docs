@@ -12,39 +12,28 @@ icon: shield
 Field-level privacy controls that protect sensitive data without requiring engineering effort. Configure once, apply everywhere.
 
 <Info>
-  Controls are an ordered pipeline that can include both privacy filters and [data transforms](/control-blocks/data-transform). You don't need transforms — you can use filter controls on their own. This page covers privacy filter controls.
+  Data Control runs inside the ordered `controls` pipeline after [input normalization](../delivery/input-normalization) and before [output formatting](../delivery/output-formatting). You can mix privacy filters with [data transforms](./data-transform) in the same object definition.
 </Info>
 
 <Tip>
-  For a complete Virtual API Configuration, start with `version: "0.3"` and define controls under `objects.<objectName>.controls`. Snippets below that start with `controls:` are fragments meant to live inside an object definition.
+  For a complete Virtual API Configuration, start with `version: "0.3"` and define controls under `objects.<objectName>.controls`. See [Virtual APIs](../core/virtual-apis) if you need a refresher on object definitions.
 </Tip>
 
-## Object Definitions
+## Quick example
 
-Data controls are defined per object type in your Virtual API Configuration. The `objects` key maps resource names to their control configurations.
-
-Given an API with these endpoints:
-- `/properties` — list of properties
-- `/properties/{propertyId}/inspections` — inspections for a property
-- `/properties/{propertyId}/inspections/{inspectionId}/issues` — issues for an inspection
-
-This configuration defines controls for each object type:
+Use Data Control when you need to protect specific fields but still preserve the rest of the upstream shape:
 
 ```yaml
 version: "0.3"
 objects:
-  properties:    # matches /properties, /properties/{propertyId}
+  customers:
     controls:
       - type: redact
-        fields: [ownerFirstName, ownerLastName]
-  inspections:   # matches .../inspections, .../inspections/{inspectionId}
-    controls:
-      - type: redact
-        fields: [inspectorFirstName]
-  issues:        # matches .../issues, .../issues/{issueId}
-    controls:
-      - type: redact
-        fields: [title]
+        fields: [ssn]
+      - type: tokenize
+        fields: [email]
+      - type: mask
+        fields: [phone]
 ```
 
 Each control has two required properties:
@@ -53,67 +42,27 @@ Each control has two required properties:
 
 You can also add `required: true` when a missing field should fail the request instead of being skipped.
 
-<Tip>
-  You'll see `fields` written two ways in our examples — both are valid YAML and produce identical results:
-  ```yaml
-  # Inline style
-  fields: [first_name, last_name]
+## Choosing a control
 
-  # Multi-line style
-  fields:
-    - first_name
-    - last_name
-  ```
-</Tip>
+| Control type | Use it when you need to |
+|--------------|-------------------------|
+| `redact` | Blank out a value but keep the field present |
+| `tokenize` | Preserve correlation across records without exposing raw identifiers |
+| `anonymize` | Produce non-correlatable stand-ins for demos, testing, or ML |
+| `mask` | Preserve some visual context while hiding most of the value |
+| `hash` | Create a deterministic one-way value for deduplication or joins |
+| `allow` | Be explicit about fields that should pass through unchanged |
 
-### The _default Object
-
-`_default` is an optional catch-all for objects not explicitly defined.
-
-```yaml
-version: "0.3"
-objects:
-  properties:
-    controls:
-      - type: redact
-        fields: [ownerName]
-  _default:
-    controls:
-      - type: redact
-        fields: [createdBy, modifiedBy]
-```
-
-**Precedence rules:**
-
-| Scenario | Behavior |
-|----------|----------|
-| Request matches undefined object | `_default` controls apply |
-| Request matches named object | Only the named object's controls apply. `_default` is not merged. |
-
-## Control Types
+## Control types
 
 ### Redact
 
-Remove sensitive data entirely. Strings become empty, numbers become zero.
-
-<Info>
-  `redact` keeps the field in the response and only changes its value. If you want the field to disappear entirely, use `delete` from [Data Transform](/control-blocks/data-transform).
-</Info>
+Remove sensitive data entirely. `redact` keeps the field in the response and only changes its value. If you want the field to disappear entirely, use `delete` from [Data Transform](./data-transform).
 
 ```yaml
 controls:
   - type: redact
     fields: [ssn, date_of_birth, drivers_license]
-```
-
-**Input:**
-```json
-{ "name": "Jane Doe", "ssn": "123-45-6789", "balance": 1000 }
-```
-
-**Output:**
-```json
-{ "name": "Jane Doe", "ssn": "", "balance": 1000 }
 ```
 
 ### Tokenize
@@ -124,16 +73,6 @@ Replace sensitive values with consistent, syntax-preserving tokens. The same inp
 controls:
   - type: tokenize
     fields: [email, phone]
-```
-
-**Input:**
-```json
-{ "email": "jane@example.com", "phone": "555-1234" }
-```
-
-**Output:**
-```json
-{ "email": "tok_abc123def456", "phone": "tok_789xyz012" }
 ```
 
 Tokenization is **scope-bound** — the same input value always produces the same token within the same Virtual API and matched object definition. Different object definitions or different Virtual APIs can produce different tokens for the same input.
@@ -148,21 +87,6 @@ controls:
     fields: [email, name]
 ```
 
-**Input:**
-```json
-{ "email": "jane@example.com", "name": "Jane Doe" }
-```
-
-**Output (first call):**
-```json
-{ "email": "user_7f3a@anon.local", "name": "Alex Smith" }
-```
-
-**Output (second call):**
-```json
-{ "email": "user_9b2c@anon.local", "name": "Jordan Lee" }
-```
-
 ### Mask
 
 Partially redact values while preserving enough structure for context. Useful in support, debugging, and audit log scenarios where you need to understand the data shape without revealing full values.
@@ -171,16 +95,6 @@ Partially redact values while preserving enough structure for context. Useful in
 controls:
   - type: mask
     fields: [ssn, phone]
-```
-
-**Input:**
-```json
-{ "name": "John Smith", "ssn": "123-45-6789", "phone": 5551234567 }
-```
-
-**Output:**
-```json
-{ "name": "Jo** ***th", "ssn": "12*-**-**89", "phone": 67 }
 ```
 
 Masking behavior varies by data type:
@@ -200,16 +114,6 @@ Replace values with a one-way SHA-256 digest. Consumers can correlate and dedupl
 controls:
   - type: hash
     fields: [email, customerId]
-```
-
-**Input:**
-```json
-{ "email": "jane@example.com", "customerId": 12345 }
-```
-
-**Output:**
-```json
-{ "email": "a3f2b8c1e9d7....", "customerId": 7293810456 }
 ```
 
 Hash behavior varies by data type:
@@ -235,84 +139,44 @@ controls:
     fields: [publicName]
 ```
 
-**Input:**
-```json
-{ "publicName": "Acme Corp" }
-```
+## Working with the controls pipeline
 
-**Output:**
-```json
-{ "publicName": "Acme Corp" }
-```
+- Controls execute top-to-bottom. Later controls see the values produced by earlier controls.
+- If you are transforming and filtering the same field, place the transform first so later controls operate on the transformed value.
+- Filter controls target scalar values only: strings, numbers, and booleans. If a path resolves to an object or array, the request fails.
+- If the matched payload is a root array, the control list runs against each object element automatically. Non-object elements are skipped.
+- Set `required: true` when a missing field should fail instead of being skipped.
 
-## Execution Rules
+## Targeting fields
 
-- Data Control uses dot notation. Slash notation like `address/city` is rejected.
-- Filter controls target scalar values only: strings, numbers, and booleans. If a path resolves to an object or array, the request fails instead of replacing the whole structure.
-- If the matched payload is an array, the control list runs against each object element automatically. Non-object elements are skipped.
-- Controls execute top-to-bottom. Later controls see values produced by earlier controls.
-- Set `required: true` on a control when a missing field should fail instead of being skipped. That check is full-path strict: if any intermediate parent segment or the final field is missing, the request fails.
-
-## Targeting Nested Fields
-
-Use dot notation to target nested fields:
+Use dot notation for nested fields and bracket segments for arrays:
 
 ```yaml
 controls:
   - type: redact
-    fields: [user.ssn, user.address.street, billing.card_number]
+    fields: [user.ssn, user.address.street, "[contacts].email"]
 ```
 
-## Targeting Arrays
+See [Field Targeting](./field-targeting) for the shared path rules used by Data Control and Data Transform.
 
-Apply controls to all items in an array:
+## When to reach for reference docs
 
-```yaml
-controls:
-  - type: tokenize
-    fields: ["[contacts].email", "[contacts].phone"]
-```
+Use this page to choose the right privacy behavior. Use the reference docs when you need exhaustive option rules or edge-case behavior:
 
-If the matched payload itself is a root array, DataHarbor applies the same control list to each object element automatically.
-
-## Combining Controls
-
-Apply multiple control types within an object definition:
-
-```yaml
-objects:
-  customers:
-    controls:
-      - type: redact
-        fields: [ssn, date_of_birth]
-      - type: tokenize
-        fields: [email]
-      - type: mask
-        fields: [phone]
-      - type: anonymize
-        fields: [name]
-      - type: hash
-        fields: [customerId]
-```
-
-## When to Use Each
-
-| Control Type | Use case |
-|--------------|----------|
-| **redact** | Data that should never leave your system (SSN, credentials) |
-| **tokenize** | Identifiers needed for correlation/analytics without exposure |
-| **anonymize** | Data for ML training, testing, or demos |
-| **mask** | Support/debugging contexts where partial visibility is needed |
-| **hash** | Correlation and deduplication without exposing original values |
-| **allow** | Explicitly permit fields that should pass through unchanged |
+- [Field Targeting](./field-targeting) for nested paths, arrays, and `required` behavior
+- [Control Block Reference](../api-reference/control-block-reference) for detailed option tables and per-control rules
+- [YAML Reference](../api-reference/yaml-reference) for the full Virtual API Configuration shape
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Data Transform" icon="shuffle" href="/control-blocks/data-transform">
-    Combine and transform fields
+  <Card title="Field Targeting" icon="crosshair" href="./field-targeting">
+    Learn how controls target nested fields and arrays
   </Card>
-  <Card title="Access Control" icon="lock" href="/control-blocks/access-control">
-    Geo restrictions and expiration
+  <Card title="Data Transform" icon="shuffle" href="./data-transform">
+    Combine, coalesce, and delete fields in the same pipeline
+  </Card>
+  <Card title="Control Block Reference" icon="code" href="../api-reference/control-block-reference">
+    Review detailed behavior and config options
   </Card>
 </CardGroup>

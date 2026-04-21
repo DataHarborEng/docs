@@ -30,18 +30,24 @@
             ]
           },
           {
-            "group": "Core",
+            "group": "Build Virtual APIs",
+            "root": "core/index",
+            "directory": "card",
             "pages": [
               "core/virtual-apis",
+              "core/data-pipeline",
               "core/enrolling-data-sources",
-              "core/agents",
-              "core/api-access"
+              "core/api-access",
+              "core/agents"
             ]
           },
           {
-            "group": "Control Blocks",
+            "group": "Govern Data",
+            "root": "control-blocks/index",
+            "directory": "card",
             "pages": [
               "control-blocks/data-control",
+              "control-blocks/field-targeting",
               "control-blocks/data-transform",
               "control-blocks/access-control",
               "control-blocks/backplane-control",
@@ -49,9 +55,12 @@
             ]
           },
           {
-            "group": "Delivery",
+            "group": "Deliver Data",
+            "root": "delivery/index",
+            "directory": "card",
             "pages": [
               "delivery/rest-api",
+              "delivery/input-normalization",
               "delivery/output-formatting",
               "delivery/markdown",
               "delivery/mcp-server",
@@ -60,6 +69,8 @@
           },
           {
             "group": "Protect",
+            "root": "protect/index",
+            "directory": "card",
             "pages": [
               "protect/schema-analytics",
               "protect/data-remediation"
@@ -67,6 +78,8 @@
           },
           {
             "group": "Marketplace",
+            "root": "marketplace/index",
+            "directory": "card",
             "pages": [
               "marketplace/global",
               "marketplace/private"
@@ -79,6 +92,8 @@
         "groups": [
           {
             "group": "Configuration",
+            "root": "api-reference/index",
+            "directory": "card",
             "pages": [
               "api-reference/yaml-reference",
               "api-reference/control-block-reference"

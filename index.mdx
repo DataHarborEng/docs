@@ -9,6 +9,8 @@ description: DataHarbor enables safe data reuse by publishing governed, purpose-
 
 DataHarbor lets you publish **governed, purpose-limited data products** from a single source of truth, without duplicating data or rewriting APIs.
 
+The docs now follow the same shape as the platform itself: start with how to build a Virtual API, understand the data pipeline, decide how to govern fields, then choose how to deliver the result.
+
 ## The problem
 
 Data was never meant to be reused this much. What used to be a single internal API is now expected to support external partners, analytics vendors, internal teams, and AI agents.
@@ -36,16 +38,22 @@ You reuse the data — not the risk.
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Quickstart" icon="rocket" href="/quickstart">
+  <Card title="Quickstart" icon="rocket" href="./quickstart">
     Get up and running in 5 minutes
   </Card>
-  <Card title="Concepts" icon="book" href="/concepts">
+  <Card title="Concepts" icon="book" href="./concepts">
     Understand the core concepts
   </Card>
-  <Card title="Virtual APIs" icon="layer-group" href="/core/virtual-apis">
-    Learn about Virtual APIs
+  <Card title="Build Virtual APIs" icon="layer-group" href="./core">
+    Understand enrollment, object matching, and the data pipeline
   </Card>
-  <Card title="Control Blocks" icon="shield" href="/control-blocks/data-control">
-    Explore privacy controls
+  <Card title="Govern Data" icon="shield" href="./control-blocks">
+    Explore privacy controls, transforms, and field targeting
+  </Card>
+  <Card title="Deliver Data" icon="file-lines" href="./delivery">
+    Format governed data for REST, MCP, and agents
+  </Card>
+  <Card title="API Reference" icon="code" href="./api-reference">
+    Look up YAML keys and control block options
   </Card>
 </CardGroup>
