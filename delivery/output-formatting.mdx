@@ -10,7 +10,7 @@ description: Convert Virtual API responses to Markdown, CSV, or YAML — via spe
 Virtual API responses are JSON by default. Output formatting lets you convert responses to Markdown, CSV, or YAML — configured in your Virtual API Configuration, requested via URL extension, or negotiated through the HTTP `Accept` header. Especially useful for AI agents that present data to humans, or for feeding governed data directly into spreadsheets and configuration tools.
 
 <Info>
-  Output formatting runs **after** [input normalization](./input-normalization) and the ordered controls pipeline. It only changes how the final governed payload is rendered. See [Data Pipeline](../core/data-pipeline) for the full request flow.
+  Output formatting runs **after** [input normalization](../sources/input-normalization) and the ordered controls pipeline. It only changes how the final governed payload is rendered. See [Data Pipeline](../core/data-pipeline) for the full request flow.
 </Info>
 
 ## Quick start
@@ -103,7 +103,7 @@ Use `default_output_format` to set a default, or request a format per call with 
 </Tabs>
 
 <Tip>
-  `input_format` is a separate setting used during [input normalization](./input-normalization). It affects how upstream data is parsed, not how the response is rendered.
+  `input_format` is a separate setting used during [input normalization](../sources/input-normalization). It affects how upstream data is parsed, not how the response is rendered.
 </Tip>
 
 ## Precedence
@@ -218,7 +218,10 @@ The response `Content-Type` reflects the selected output format, and `Vary: Acce
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Input Normalization" icon="arrow-down-up" href="./input-normalization">
+  <Card title="Connect Sources" icon="database-zap" href="../sources">
+    Start with how upstream formats enter DataHarbor
+  </Card>
+  <Card title="Input Normalization" icon="arrow-down-up" href="../sources/input-normalization">
     See how upstream JSON, CSV, YAML, and Markdown are parsed
   </Card>
   <Card title="Markdown Input" icon="file-text" href="./markdown">

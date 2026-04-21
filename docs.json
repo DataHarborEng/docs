@@ -55,12 +55,19 @@
             ]
           },
           {
+            "group": "Connect Sources",
+            "root": "sources/index",
+            "directory": "card",
+            "pages": [
+              "sources/input-normalization"
+            ]
+          },
+          {
             "group": "Deliver Data",
             "root": "delivery/index",
             "directory": "card",
             "pages": [
               "delivery/rest-api",
-              "delivery/input-normalization",
               "delivery/output-formatting",
               "delivery/markdown",
               "delivery/mcp-server",

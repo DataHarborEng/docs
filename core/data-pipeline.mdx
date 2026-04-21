@@ -27,7 +27,7 @@ Authenticate → Authorize → Fetch → Normalize → Match object → Apply co
   <Step title="Normalize into canonical JSON">
     JSON stays JSON. CSV becomes arrays of objects. YAML becomes JSON-compatible objects and arrays. Markdown becomes a document object with `content` and optional `frontmatter`.
 
-    See [Input Normalization](../delivery/input-normalization).
+    See [Input Normalization](../sources/input-normalization).
   </Step>
 
   <Step title="Match the object definition">
@@ -97,7 +97,7 @@ For a request that matches `customers`, the pipeline looks like this:
   <Card title="Virtual APIs" icon="layer-group" href="./virtual-apis">
     Understand how object definitions and controls are configured
   </Card>
-  <Card title="Input Normalization" icon="arrow-down-up" href="../delivery/input-normalization">
+  <Card title="Input Normalization" icon="arrow-down-up" href="../sources/input-normalization">
     See how JSON, CSV, YAML, and Markdown are parsed
   </Card>
   <Card title="Govern Data" icon="shield" href="../control-blocks">
