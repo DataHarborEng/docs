@@ -27,17 +27,17 @@ The current docs model supports these upstream authentication patterns:
 | API key | Source expects a key in a request header |
 | Basic auth | Source expects a username and password |
 
-## Handle secrets outside config
+## Credential storage
 
-Do not put upstream API keys, passwords, or other secret values directly into docs, checked-in config, or shared examples.
+When you provide upstream credentials for an HTTP source, DataHarbor stores that secret material in **Azure Key Vault**.
 
-Store secret material in **Azure Key Vault** or an equivalent secrets manager, then reference it operationally through your source-connection workflow.
+That includes values such as:
 
-The practical rule is simple:
+- upstream API keys
+- basic auth usernames and passwords
+- other source-level secrets required to call the upstream service
 
-- docs should show placeholders such as `YOUR_API_KEY`
-- examples should never contain real secret values
-- production credentials should live in a dedicated secret store, not in YAML or MDX
+In docs and examples, continue to use placeholders such as `YOUR_API_KEY`. Real credential values should not appear in MDX, checked-in config, or shared examples.
 
 ## How HTTP sources fit the pipeline
 
