@@ -1,0 +1,62 @@
+---
+title: HTTP Sources
+description: Connect HTTP sources to DataHarbor and handle authentication material safely.
+---
+
+# HTTP Sources
+
+HTTP sources are the current source model for DataHarbor. In practice, this means REST-style endpoints that return JSON today, plus other payload formats like CSV, YAML, and Markdown that DataHarbor can normalize before controls run.
+
+## What you provide
+
+When you connect an HTTP source, you typically define:
+
+- a base URL for the upstream service
+- a request path template that describes the resource hierarchy
+- the upstream authentication method, when one is required
+
+See [Enrolling Data Sources](../core/enrolling-data-sources) for the current enrollment flow and path-template behavior.
+
+## Authentication
+
+The current docs model supports these upstream authentication patterns:
+
+| Method | Typical use |
+|--------|-------------|
+| Public | Source does not require credentials |
+| API key | Source expects a key in a request header |
+| Basic auth | Source expects a username and password |
+
+## Handle secrets outside config
+
+Do not put upstream API keys, passwords, or other secret values directly into docs, checked-in config, or shared examples.
+
+Store secret material in **Azure Key Vault** or an equivalent secrets manager, then reference it operationally through your source-connection workflow.
+
+The practical rule is simple:
+
+- docs should show placeholders such as `YOUR_API_KEY`
+- examples should never contain real secret values
+- production credentials should live in a dedicated secret store, not in YAML or MDX
+
+## How HTTP sources fit the pipeline
+
+Once DataHarbor fetches an HTTP response, the rest of the request flow is the same:
+
+1. normalize the payload into the canonical JSON model
+2. match the correct object definition
+3. apply controls and transforms
+4. format the governed result for delivery
+
+See [Data Pipeline](../core/data-pipeline) for the full flow and [Input Normalization](./input-normalization) for the format-specific parsing stage.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Input Normalization" icon="arrow-down-up" href="./input-normalization">
+    See how HTTP payloads normalize before controls run
+  </Card>
+  <Card title="Enrolling Data Sources" icon="plug" href="../core/enrolling-data-sources">
+    Review the current enrollment workflow
+  </Card>
+</CardGroup>

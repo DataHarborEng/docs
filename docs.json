@@ -59,6 +59,7 @@
             "root": "sources/index",
             "directory": "card",
             "pages": [
+              "sources/http-sources",
               "sources/input-normalization"
             ]
           },
