@@ -5,7 +5,7 @@ description: Connect your existing APIs to DataHarbor.
 
 # Enrolling Data Sources
 
-Enrollment connects your existing data source to DataHarbor. Once enrolled, you can create multiple [Virtual APIs](/core/virtual-apis) from a single source.
+Enrollment connects your existing data source to DataHarbor. Once enrolled, you can create multiple [Virtual APIs](./virtual-apis) from a single source.
 
 ## Supported sources
 
@@ -42,7 +42,7 @@ The path template describes the full route structure of your API using `{paramet
 /customers/{customerId}/orders/{orderId}/items/{itemId}
 ```
 
-DataHarbor uses this template to understand your API's resource hierarchy. Each static segment (like `customers`, `orders`, `items`) becomes a matchable object name in your [Virtual API Configuration](/core/virtual-apis#object-definitions-and-route-matching).
+DataHarbor uses this template to understand your API's resource hierarchy. Each static segment (like `customers`, `orders`, `items`) becomes a matchable object name in your [Virtual API Configuration](./virtual-apis#object-definitions-and-route-matching).
 
 #### Required parameters
 
@@ -108,10 +108,10 @@ Schema discovery runs automatically as requests flow through your Virtual APIs â
   <Card title="HTTP Sources" icon="globe" href="../sources/http-sources">
     See the current source connection model and auth expectations
   </Card>
-  <Card title="Virtual APIs" icon="layer-group" href="/core/virtual-apis">
+  <Card title="Virtual APIs" icon="layer-group" href="./virtual-apis">
     Create Virtual APIs from your enrolled source
   </Card>
-  <Card title="Schema Analytics" icon="chart-line" href="/protect/schema-analytics">
+  <Card title="Schema Analytics" icon="chart-line" href="../protect/schema-analytics">
     Monitor schema changes over time
   </Card>
 </CardGroup>
