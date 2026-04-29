@@ -12,6 +12,7 @@ Enrollment connects your existing data source to DataHarbor. Once enrolled, you 
 | Source Type | Status |
 |-------------|--------|
 | REST APIs (JSON, CSV, YAML, Markdown) | Available |
+| GraphQL APIs (query-only) | Available |
 | Azure Fabric | Coming Soon |
 | Databricks | Coming Soon |
 | Snowflake | Coming Soon |
@@ -19,10 +20,11 @@ Enrollment connects your existing data source to DataHarbor. Once enrolled, you 
 
 ## Enrolling a REST API
 
-Enrollment is done through the DataHarbor dashboard. You provide two things:
+Enrollment is done through the DataHarbor dashboard. You configure three things:
 
 1. **Base URL** — the root URL of your upstream API
-2. **Request Path Template** — the path structure with parameter placeholders
+2. **Route Enforcement** — whether requests must stay within the enrolled template
+3. **Request Path Template** — the path structure with parameter placeholders
 
 ### Base URL
 
@@ -43,6 +45,19 @@ The path template describes the full route structure of your API using `{paramet
 ```
 
 DataHarbor uses this template to understand your API's resource hierarchy. Each static segment (like `customers`, `orders`, `items`) becomes a matchable object name in your [Virtual API Configuration](./virtual-apis#object-definitions-and-route-matching).
+
+### Route enforcement
+
+HTTP sources support two route enforcement modes:
+
+| Mode | Behavior |
+|---|---|
+| `Strict` | Requests must follow the enrolled route template. Requests outside that shape are rejected. |
+| `Permissive` | DataHarbor sends any request path to the configured backend. |
+
+Use `Strict` when you want the source definition to define the allowed route family. Use `Permissive` when you want DataHarbor to proxy arbitrary paths to the same backend.
+
+See [Route Matching](../sources/route-matching) for how strict-mode admissibility works.
 
 #### Required parameters
 
@@ -91,6 +106,18 @@ DataHarbor supports three authentication methods for connecting to your upstream
 | **Basic** | Username and password |
 
 When you provide upstream credentials during enrollment, DataHarbor stores that secret material in a **secure secret store** rather than embedding it in the Virtual API Configuration.
+
+## Enrolling a GraphQL API
+
+GraphQL enrollment follows the same dashboard flow, but instead of a path template you define:
+
+1. **Endpoint URL** — the upstream GraphQL endpoint
+2. **Named operations** — the `query` documents callers are allowed to run
+3. **Authentication** — the source-level credentials DataHarbor uses upstream
+
+Unlike REST sources, callers do not send arbitrary request paths or GraphQL documents. They invoke one of the operation IDs you enrolled on the source.
+
+See [GraphQL Sources](../sources/graphql-sources) for the source-specific rules, operation constraints, variable handling, and filter-spec guidance.
 
 ## Schema discovery
 

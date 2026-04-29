@@ -15,14 +15,14 @@ A Virtual API is a governed view of an existing dataset. Instead of cloning data
 
 ## How it works
 
-1. **Enroll** your data source (REST API today, data lakes coming soon)
+1. **Enroll** your data source (HTTP and GraphQL today, data lakes coming soon)
 2. **Define** your Virtual API Configuration — object definitions, controls, and access rules
 3. **Publish** — your Virtual API is instantly available
 4. **Monitor** — observe usage and schema changes over time
 
 ## Basic configuration
 
-A Virtual API Configuration defines which fields to protect, organized by the API objects (route segments) they apply to:
+A Virtual API Configuration defines which fields to protect, organized by the source objects they apply to:
 
 ```yaml
 version: "0.3"
@@ -84,6 +84,10 @@ This ordered controls list runs after [input normalization](../sources/input-nor
 ## Object definitions and route matching
 
 Each key under `objects` is a named object definition that matches against URL path segments. DataHarbor matches the object name to the last (or second-to-last) segment of the request path.
+
+<Info>
+  GraphQL sources are the exception: object names come from the response shape under `data`, not from URL path segments. See [GraphQL Sources](../sources/graphql-sources) for the GraphQL-specific matching model.
+</Info>
 
 ```yaml
 version: "0.3"

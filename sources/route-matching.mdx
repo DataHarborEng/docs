@@ -7,11 +7,18 @@ description: How DataHarbor validates incoming requests against your enrolled pa
 
 When a request arrives through a Virtual API, DataHarbor validates the request path against the path template you provided during enrollment. This determines whether the request is **admissible** and which **governed object** controls apply.
 
-This is stricter than a pass-everything proxy. DataHarbor enforces that every request fits within the boundaries defined by your enrolled source.
+HTTP sources support two **Route Enforcement** modes during enrollment:
+
+| Mode | Behavior |
+|---|---|
+| `Strict` | Requests must stay within the enrolled route template. Requests that move outside that template are rejected before the upstream call. |
+| `Permissive` | DataHarbor forwards any request path to the configured backend, even when it falls outside the enrolled route template. |
+
+The admissibility rules below describe `Strict` mode.
 
 ## How it works
 
-Every HTTP source has a **path template** set during enrollment. DataHarbor uses this template to:
+In `Strict` mode, every HTTP source has a **path template** set during enrollment. DataHarbor uses this template to:
 
 1. **Gate admissibility** — reject requests that fall outside the template's route family
 2. **Resolve the governed object** — determine which object's controls apply to the response
@@ -93,6 +100,8 @@ When no path template is provided, DataHarbor operates in **passthrough mode**. 
 
 This is useful for sources where you want DataHarbor to apply uniform controls without constraining the URL structure.
 
+`Permissive` route enforcement is similar in spirit: DataHarbor does not reject off-template paths before forwarding them to the backend.
+
 ## Cardinality
 
 DataHarbor derives cardinality from the last matched segment position:
@@ -104,7 +113,7 @@ For passthrough and all-parameter templates, cardinality defaults to `Many`.
 
 ## What gets rejected
 
-Any request that fails admissibility is rejected **before** the upstream call is made. DataHarbor never proxies an ungoverned request.
+In `Strict` mode, any request that fails admissibility is rejected **before** the upstream call is made.
 
 Common rejection reasons:
 

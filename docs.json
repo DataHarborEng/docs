@@ -35,6 +35,7 @@
             "directory": "card",
             "pages": [
               "sources/http-sources",
+              "sources/graphql-sources",
               "sources/route-matching",
               "sources/input-normalization"
             ]

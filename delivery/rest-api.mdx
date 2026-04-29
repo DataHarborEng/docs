@@ -13,19 +13,45 @@ The standard delivery mechanism for Virtual APIs. The current runtime exposes le
 
 | Access mode | Endpoint | Authentication |
 |---|---|---|
-| Authenticated fetch | `/fetch/{leaseId}/{path}` | `dataHarbor-api-key` |
-| Marketplace relay | `/relay/{leaseId}/{path}` | `dataHarbor-api-key: mkp_...` |
-| Org authorization relay | `/relay/{leaseId}/{path}` | `dataHarbor-api-key: mkp_...` (authorized org's key) |
+| Authenticated fetch | `/fetch/{leaseId}/{target}` | `dataharbor-api-key` |
+| Marketplace relay | `/relay/{leaseId}/{target}` | `dataharbor-api-key: mkp_...` |
+| Org authorization relay | `/relay/{leaseId}/{target}` | `dataharbor-api-key: mkp_...` (authorized org's key) |
 
 `fetch` is the standard authenticated path for a Virtual API. `relay` is reserved for Virtual APIs with `Unlisted Open` or `Listed Open` visibility, and the current runtime still requires a marketplace API key on relay requests.
 
 ## Authenticated fetch
 
-Use the API key issued for your Virtual API and call the fetch endpoint with the upstream route appended after the lease ID:
+Use the API key issued for your Virtual API and call the fetch endpoint with the source target appended after the lease ID:
+
+- For HTTP sources, the target is the upstream route path.
+- For GraphQL sources, the target is the enrolled operation ID.
+
+### Method and body
+
+| Source / operation type | Method | Body |
+|---|---|---|
+| HTTP `GET` route | `GET` | none |
+| HTTP `POST` route | `POST` | as configured by the source |
+| GraphQL operation, no variables | `GET` or `POST` | none |
+| GraphQL operation with variables | `POST` | `{"variables": {...}}` (JSON) |
+
+`GET` cannot carry a body, so any operation that needs variables must be invoked with `POST`. See [GraphQL Sources](../sources/graphql-sources#when-to-use-get-vs-post) for the GraphQL specifics.
+
+### `GET` example
 
 ```bash
-curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+curl -H "dataharbor-api-key: YOUR_API_KEY" \
   https://service.dataharbor.co/fetch/b097a4d3-44e6-4490-9f03-104f4d636e20/customers
+```
+
+### `POST` example (HTTP source or GraphQL with variables)
+
+```bash
+curl -X POST \
+  -H "dataharbor-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"variables":{"id":1}}' \
+  https://service.dataharbor.co/fetch/b097a4d3-44e6-4490-9f03-104f4d636e20/getCustomer
 ```
 
 ## Marketplace relay
@@ -35,7 +61,7 @@ For marketplace-visible Virtual APIs, the relay endpoint uses the same lease-bas
 You can create a marketplace key from the account settings page in DataHarbor.
 
 ```bash
-curl -H "dataHarbor-api-key: mkp_your_marketplace_key" \
+curl -H "dataharbor-api-key: mkp_your_marketplace_key" \
   https://service.dataharbor.co/relay/166d4e26-3d40-4e44-806a-e56b93ebb121/customers
 ```
 
@@ -44,7 +70,7 @@ curl -H "dataHarbor-api-key: mkp_your_marketplace_key" \
 When a lease owner [authorizes an organization](../core/api-access#organization-authorizations), that organization's existing marketplace key (`mkp_...`) works on the relay endpoint for the authorized Virtual API. No additional keys or auth types are needed.
 
 ```bash
-curl -H "dataHarbor-api-key: mkp_partner_marketplace_key" \
+curl -H "dataharbor-api-key: mkp_partner_marketplace_key" \
   https://service.dataharbor.co/relay/166d4e26-3d40-4e44-806a-e56b93ebb121/customers
 ```
 
@@ -71,11 +97,11 @@ Append `.md` or `.json` to any endpoint path to request a specific output format
 
 ```bash
 # Markdown table — great for agents and quick inspection
-curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+curl -H "dataharbor-api-key: YOUR_API_KEY" \
   https://service.dataharbor.co/fetch/b097a4d3/customers.md
 
 # Explicit JSON (default behavior)
-curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+curl -H "dataharbor-api-key: YOUR_API_KEY" \
   https://service.dataharbor.co/fetch/b097a4d3/customers.json
 ```
 
@@ -103,7 +129,7 @@ const response = await fetch(
   'https://service.dataharbor.co/fetch/b097a4d3-44e6-4490-9f03-104f4d636e20/customers',
   {
     headers: {
-      'dataHarbor-api-key': 'YOUR_API_KEY',
+      'dataharbor-api-key': 'YOUR_API_KEY',
       'Content-Type': 'application/json'
     }
   }

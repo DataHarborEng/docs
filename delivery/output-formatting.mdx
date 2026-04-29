@@ -67,13 +67,13 @@ Use `default_output_format` to set a default, or request a format per call with 
   Append an extension to any data endpoint URL to request a format without changing the Virtual API Configuration.
 
   ```bash
-  curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+  curl -H "dataharbor-api-key: YOUR_API_KEY" \
     https://service.dataharbor.co/fetch/b097a4d3/customers.md
 
-  curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+  curl -H "dataharbor-api-key: YOUR_API_KEY" \
     https://service.dataharbor.co/fetch/b097a4d3/customers.csv
 
-  curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+  curl -H "dataharbor-api-key: YOUR_API_KEY" \
     https://service.dataharbor.co/fetch/b097a4d3/customers.yaml
   ```
 
@@ -92,7 +92,7 @@ Use `default_output_format` to set a default, or request a format per call with 
   | `text/yaml` | YAML |
 
   ```bash
-  curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+  curl -H "dataharbor-api-key: YOUR_API_KEY" \
     -H "Accept: text/markdown" \
     https://service.dataharbor.co/fetch/b097a4d3/customers
   ```

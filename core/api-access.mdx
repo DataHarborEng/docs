@@ -28,10 +28,10 @@ Virtual APIs with **Disabled** or **Private** visibility use the fetch endpoint 
 https://service.dataharbor.co/fetch/{leaseId}/{path}
 ```
 
-Include the `dataHarbor-api-key` header — you can find your API key in the Virtual API dashboard.
+Include the `dataharbor-api-key` header — you can find your API key in the Virtual API dashboard.
 
 ```bash
-curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+curl -H "dataharbor-api-key: YOUR_API_KEY" \
   https://service.dataharbor.co/fetch/b097a4d3-44e6-4490-9f03-104f4d636e20
 ```
 
@@ -49,11 +49,11 @@ The `{leaseId}` is the unique identifier for your Virtual API. The `{path}` maps
 
 ```bash
 # List properties
-curl -H "dataHarbor-api-key: mkp_your_marketplace_key" \
+curl -H "dataharbor-api-key: mkp_your_marketplace_key" \
   https://service.dataharbor.co/relay/166d4e26-3d40-4e44-806a-e56b93ebb121/properties
 
 # Get a specific property's issues
-curl -H "dataHarbor-api-key: mkp_your_marketplace_key" \
+curl -H "dataharbor-api-key: mkp_your_marketplace_key" \
   https://service.dataharbor.co/relay/166d4e26-3d40-4e44-806a-e56b93ebb121/properties/1/issues
 ```
 
@@ -75,7 +75,7 @@ Lease owners can authorize specific partner organizations for relay access to th
 
 ```bash
 # Partner org uses their existing marketplace key
-curl -H "dataHarbor-api-key: mkp_partner_marketplace_key" \
+curl -H "dataharbor-api-key: mkp_partner_marketplace_key" \
   https://service.dataharbor.co/relay/b097a4d3-44e6-4490-9f03-104f4d636e20/customers
 ```
 

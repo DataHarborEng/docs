@@ -7,7 +7,7 @@ description: Understand how source data enters DataHarbor and is normalized befo
 
 This section covers the source side of the platform: how data gets into DataHarbor before object matching, controls, and delivery happen.
 
-Start with [HTTP Sources](./http-sources) for the currently supported source pattern, then use [Input Normalization](./input-normalization) to understand how those payloads are parsed before governance begins.
+Start with [HTTP Sources](./http-sources) or [GraphQL Sources](./graphql-sources), then use [Input Normalization](./input-normalization) to understand how payloads are parsed before governance begins.
 
 Over time, this section can also house source-specific connection guides for systems like Snowflake and other upstream platforms.
 
@@ -18,6 +18,9 @@ After you have the source side understood, continue to [Build Virtual APIs](../c
 <CardGroup cols={2}>
   <Card title="HTTP Sources" icon="globe" href="./http-sources">
     Connect REST-style HTTP sources and handle authentication safely
+  </Card>
+  <Card title="GraphQL Sources" icon="git-branch" href="./graphql-sources">
+    Connect query-based GraphQL APIs with pre-registered operations
   </Card>
   <Card title="Route Matching" icon="route" href="./route-matching">
     How DataHarbor validates requests against your enrolled path template

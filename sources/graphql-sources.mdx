@@ -1,0 +1,321 @@
+---
+title: GraphQL Sources
+description: Connect a GraphQL API to DataHarbor with pre-registered queries, governed responses, and standard Virtual API delivery.
+---
+
+# GraphQL Sources
+
+GraphQL sources let you place an existing GraphQL API behind a governed Virtual API. Instead of exposing your upstream endpoint directly, you enroll a single GraphQL endpoint, pre-register the queries callers are allowed to run, and let DataHarbor apply the same governance pipeline used for other sources.
+
+<Info>
+  GraphQL sources are query-only today. `mutation` and `subscription` operations are rejected during enrollment.
+</Info>
+
+## Before you start
+
+Before you enroll a GraphQL source, make sure you have:
+
+- the upstream GraphQL endpoint URL
+- the auth material DataHarbor should use when calling the upstream
+- one or more named `query` operations you want callers to run
+- a plan for how you want to govern the response shape in your [Virtual API Configuration](../core/virtual-apis)
+
+## How GraphQL sources work
+
+You enroll a GraphQL endpoint once, define the operations callers may invoke, and then publish governed views of that source through Virtual APIs.
+
+```diagram
+╭──────────╮     ╭──────────────╮     ╭───────────╮     ╭──────────╮
+│  Caller  │────▶│  Virtual API │────▶│ DataHarbor│────▶│ Upstream │
+│ (HTTPS)  │     │   /fetch/    │     │  Controls │     │ GraphQL  │
+╰──────────╯     ╰──────┬───────╯     ╰─────┬─────╯     ╰────┬─────╯
+       ▲                │                   │                │
+       │                ▼                   ▼                │
+       │         named operation     governed GraphQL JSON   │
+       │         (for example        with controls applied   │
+       │         `listProperties`)                           │
+       │                                                     │
+       ╰─────────────────────────────────────────────────────╯
+                       response flows back
+```
+
+1. You enroll a GraphQL endpoint as a source.
+2. You pre-register the queries callers are allowed to run.
+3. You create one or more [Virtual APIs](../core/virtual-apis) on top of that source.
+4. Callers invoke a named operation through `/fetch/{leaseId}/{operationId}`.
+5. DataHarbor calls the upstream with the stored auth, applies your controls, and returns a standard GraphQL response envelope.
+
+The caller never sees your upstream URL, never sends an arbitrary GraphQL document, and never gets direct access to the upstream secret.
+
+## Enroll a GraphQL source
+
+Use the standard [enrollment flow](../core/enrolling-data-sources), but choose GraphQL as the source type and provide these fields:
+
+| Field | What you provide |
+|---|---|
+| `endpointUrl` | The upstream GraphQL endpoint |
+| `defaultHeaders` | Optional headers sent on every request |
+| `operations[]` | The named queries callers are allowed to run |
+| `auth` | The upstream authentication config |
+
+### Define named operations
+
+Each entry in `operations[]` describes one allowed query.
+
+| Field | Required | Description |
+|---|---|---|
+| `id` | yes | The short handle callers use in `/fetch/{leaseId}/{id}` |
+| `operationName` | yes | The GraphQL operation name inside the document |
+| `document` | yes | The full query document, including any variable definitions |
+
+Basic example:
+
+```json
+{
+  "operations": [
+    {
+      "id": "listProperties",
+      "operationName": "ListProperties",
+      "document": "query ListProperties { properties { id ownerFirstName ownerLastName phoneNumber } }"
+    }
+  ]
+}
+```
+
+Advanced example with variables:
+
+```json
+{
+  "operations": [
+    {
+      "id": "getProperty",
+      "operationName": "GetProperty",
+      "document": "query GetProperty($id: Int!) { property(id: $id) { id ownerFirstName ownerLastName phoneNumber address { city province postalCode } } }"
+    }
+  ]
+}
+```
+
+### Operation rules
+
+DataHarbor validates operation documents before saving the source. Enrollment fails if:
+
+- the document is a `mutation`
+- the document is a `subscription`
+- the document does not parse as valid GraphQL
+- two operations use the same `id`
+- `operationName` does not exist in the document
+- a multi-operation document is ambiguous
+
+Use short, URL-safe `id` values such as `listUsers`, `getUser`, or `searchOrders`. Each `id` must be unique within the source.
+
+### Multi-operation documents
+
+A single `document` may contain more than one `query` definition; set `operationName` to disambiguate which one runs:
+
+```json
+{
+  "operations": [
+    {
+      "id": "getProperty",
+      "operationName": "GetProperty",
+      "document": "query GetProperty($id: Int!) { property(id: $id) { id ownerLastName } } query ListProperties { properties { id ownerLastName } }"
+    }
+  ]
+}
+```
+
+The `operationName` field tells DataHarbor which operation in the document to execute. Documents with multiple operations and no `operationName` are rejected.
+
+> **DataHarbor's operations are the persisted-query equivalent.** Apollo Persisted Queries (APQ) and other client-side persisted-query flows are not supported, but the `operations[]` model gives you the same end result: callers reference a stable, server-curated query by id rather than sending a full document.
+
+### Variable handling
+
+DataHarbor parses variable definitions out of each operation document at enrollment time and stores the declared variable names alongside the operation. At runtime:
+
+- Only declared variables are forwarded to the upstream. Extra keys in the body are silently dropped.
+- Required variables (`!`) are not auto-validated at the broker — if you omit one, the **upstream** rejects the request and you receive its error response.
+- Variables stay JSON-native; DataHarbor never string-interpolates caller input into the operation document.
+
+The DataHarbor dashboard shows the parsed variable names on each operation in the connection blade and pre-populates the sample request body with `null` defaults so callers can see what an operation accepts without re-reading the document.
+
+### Configure upstream authentication
+
+GraphQL sources use the same source-level auth model as other connectors. The most common pattern is an API key in a request header:
+
+```json
+{
+  "auth": {
+    "displayName": "Vendor GraphQL Key",
+    "headerName": "X-Api-Key",
+    "secretValue": "YOUR_UPSTREAM_API_KEY",
+    "isActive": true
+  }
+}
+```
+
+DataHarbor stores the secret in [secure secret storage](../core/enrolling-data-sources#authentication) rather than in the source row itself.
+
+## Call a GraphQL Virtual API
+
+Once you have created a Virtual API on top of the GraphQL source, callers use the standard [REST API delivery flow](../delivery/rest-api).
+
+### When to use GET vs POST
+
+| Operation | Method | Body |
+|---|---|---|
+| No variables | `GET` or `POST` | none |
+| With variables | `POST` | `{"variables": {...}}` (JSON) |
+
+DataHarbor accepts either method on `/fetch/{leaseId}/{operationId}`. Use `POST` whenever you need to pass variables — `GET` cannot carry a body, so a `GET` to an operation that declares required variables will fail at the upstream.
+
+### Query without variables
+
+```bash
+curl -s "$BASE/fetch/$LEASE_ID/listProperties" \
+  -H "dataharbor-api-key: $LEASE_KEY"
+```
+
+### Query with variables
+
+```bash
+curl -s -X POST "$BASE/fetch/$LEASE_ID/getProperty" \
+  -H "dataharbor-api-key: $LEASE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"variables":{"id":1}}'
+```
+
+DataHarbor forwards only the variables declared by the operation. Extra keys are ignored, and callers cannot inject new GraphQL text into the stored document.
+
+## Govern GraphQL responses
+
+GraphQL responses are still JSON, so you use the same filter spec language described in [Virtual APIs](../core/virtual-apis) and [Field Targeting](../control-blocks/field-targeting). The key difference is how you choose object names.
+
+### What controls run on
+
+Controls run against the response body as a whole, with object selection rooted at the GraphQL envelope:
+
+- **`data.<collection>`** is the conventional target — DataHarbor matches collection keys under `data` against the object names in your filter spec.
+- **`errors`** is preserved as-is and passed through to the caller. It is part of the JSON envelope, so you _can_ target it like any other object (e.g., to redact sensitive fields a vendor leaks in error messages), but most filter specs leave it alone.
+
+### Map object names from `data`
+
+Use the top-level collection key under `data` as the object name in your spec. In practice, this is usually the plural resource name, such as `properties` or `users`.
+
+If your query returns:
+
+```json
+{
+  "data": {
+    "properties": [
+      {
+        "id": 1,
+        "ownerFirstName": "Sarah",
+        "phoneNumber": "204-555-0187",
+        "address": {
+          "city": "Winnipeg",
+          "postalCode": "R3Y 0L8"
+        }
+      }
+    ]
+  }
+}
+```
+
+...you would target `properties` in your spec:
+
+```yaml
+version: "0.3"
+useStrictNameMatching: false
+objects:
+  properties:
+    controls:
+      - type: redact
+        fields: [phoneNumber, ownerFirstName, address.postalCode]
+```
+
+`useStrictNameMatching: false` is a good default for GraphQL sources because different operations often return the same logical object with slightly different shapes.
+
+### Target nested objects
+
+You can also govern nested objects directly:
+
+```yaml
+version: "0.3"
+useStrictNameMatching: false
+objects:
+  address:
+    controls:
+      - type: hash
+        fields: [postalCode]
+  _default:
+    controls:
+      - type: redact
+        fields: [internalNotes]
+```
+
+This gives you a simple advanced pattern:
+
+- apply object-specific controls where the response shape is stable
+- use `_default` for broad protections you want across multiple operations
+
+## Response handling
+
+DataHarbor preserves the normal GraphQL response model.
+
+| Upstream result | What callers receive |
+|---|---|
+| `{ "data": ... }` | Normal success with your controls applied |
+| `{ "errors": [...] }` | The upstream GraphQL errors array is passed through |
+| `{ "data": ..., "errors": [...] }` | Partial success with both `data` and `errors` preserved |
+| HTTP `4xx` or `5xx` | A transport error from the upstream |
+
+> **GraphQL `200 OK` does not always mean success.** A response with `"errors"` in the body is still HTTP `200`. Always check the `errors` field on the parsed response, even when `data` is present — partial failures are normal in GraphQL and your client must handle them.
+
+For example:
+
+```json
+{
+  "data": {
+    "property": {
+      "id": 1,
+      "ownerLastName": "Johnson"
+    }
+  }
+}
+```
+
+If a caller uses an operation ID that is not enrolled on the source, DataHarbor returns `400` and rejects the request.
+
+## Limitations
+
+- Queries are supported today. Mutations and subscriptions are not.
+- Callers can only invoke operations you enrolled ahead of time.
+- Schema discovery is response-sample based rather than introspection based.
+- Persisted queries and APQ flows are not supported.
+
+## Troubleshooting
+
+| Symptom | Likely cause | What to check |
+|---|---|---|
+| Enrollment fails because an operation is a mutation or subscription | The document is not a `query` | Split the document and enroll only query operations |
+| Enrollment fails because an `id` is duplicated | Two `operations[]` entries share the same `id` | Rename one operation ID |
+| `/fetch/` returns `400` for the operation path | The operation ID in the URL is not enrolled | Verify the exact `operations[].id` value on the source |
+| GraphQL returns `errors` with no `data` | The upstream rejected the request | Inspect the upstream error payload |
+| `GET` to an operation returns an upstream error about missing variables | `GET` cannot carry a body, so variables never reached the upstream | Switch to `POST` with `{"variables": {...}}` |
+| Variables in the request body appear to be ignored | The variable name in the body does not match the operation's declared variable | Check declared variable names in the dashboard or the operation document; undeclared keys are silently dropped |
+| Controls do not apply | The object name in the filter spec does not match the response shape | Check the collection key under `data` and update `objects.<name>` |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Enrolling Data Sources" icon="plug" href="../core/enrolling-data-sources">
+    Review the shared source enrollment flow
+  </Card>
+  <Card title="Virtual APIs" icon="layer-group" href="../core/virtual-apis">
+    Define the controls that run on GraphQL responses
+  </Card>
+  <Card title="REST API Delivery" icon="bolt" href="../delivery/rest-api">
+    See how callers invoke your governed endpoints
+  </Card>
+</CardGroup>
