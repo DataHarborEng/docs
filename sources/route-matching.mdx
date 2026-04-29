@@ -1,0 +1,113 @@
+---
+title: Route Matching
+description: How DataHarbor validates incoming requests against your enrolled path template.
+---
+
+# Route Matching
+
+When a request arrives through a Virtual API, DataHarbor validates the request path against the path template you provided during enrollment. This determines whether the request is **admissible** and which **governed object** controls apply.
+
+This is stricter than a pass-everything proxy. DataHarbor enforces that every request fits within the boundaries defined by your enrolled source.
+
+## How it works
+
+Every HTTP source has a **path template** set during enrollment. DataHarbor uses this template to:
+
+1. **Gate admissibility** — reject requests that fall outside the template's route family
+2. **Resolve the governed object** — determine which object's controls apply to the response
+3. **Derive cardinality** — detect whether the response is a collection or a single resource
+
+## Admissibility rules
+
+A request target is admissible when:
+
+- the number of path segments does not exceed the template's segment count
+- every literal segment in the template matches the corresponding segment in the request (case-insensitive)
+- parameter segments (`{param}`) accept any value
+
+### Examples
+
+Given the template `/customers/{customerId}/orders/{orderId}`:
+
+| Request path | Admissible | Reason |
+|---|---|---|
+| `/customers` | ✅ | Prefix of the template |
+| `/customers/42` | ✅ | Matches literal + param |
+| `/customers/42/orders` | ✅ | Matches through `orders` literal |
+| `/customers/42/orders/100` | ✅ | Full template match |
+| `/customers/42/orders/100/items` | ❌ | Exceeds template depth |
+| `/users/42` | ❌ | `users` does not match `customers` |
+| `/orders/100` | ❌ | `orders` does not match `customers` |
+
+## Governed object resolution
+
+DataHarbor resolves the governed object as the **deepest literal segment** that the request matches. This determines which object's controls apply along with any `_default` controls.
+
+Given the template `/properties/{propertyId}/inspections/{inspectionId}/issues/{issueId}`:
+
+| Request path | Governed object | Cardinality |
+|---|---|---|
+| `/properties` | `properties` | Many (collection) |
+| `/properties/42` | `properties` | One (single resource) |
+| `/properties/42/inspections` | `inspections` | Many |
+| `/properties/42/inspections/7` | `inspections` | One |
+| `/properties/42/inspections/7/issues` | `issues` | Many |
+| `/properties/42/inspections/7/issues/3` | `issues` | One |
+
+At runtime, DataHarbor applies `_default` controls plus the resolved object's controls. A request to `/properties/42/inspections/7` applies `_default` + `inspections` — not `properties`.
+
+## Supported template shapes
+
+DataHarbor supports all valid path template shapes, not just the standard alternating `literal/{param}` pattern.
+
+### Standard REST hierarchy
+
+The most common pattern. Each literal names a resource collection, each parameter identifies a specific resource.
+
+```
+/customers/{customerId}/orders/{orderId}/items/{itemId}
+```
+
+### Non-alternating templates
+
+Templates where literals appear consecutively or in non-standard positions.
+
+```
+/users/foo/bar          → governed objects: users, foo, bar
+/{var}/foo/{blah}       → governed object: foo
+/items/{itemId}/close   → governed objects: items, close
+```
+
+### All-parameter templates
+
+Templates with no literal segments. Requests are validated against segment count, but there is no governed object — only `_default` controls apply.
+
+```
+/{tenantId}             → no governed object
+/{tenantId}/{resourceId} → no governed object
+```
+
+### Empty template (passthrough)
+
+When no path template is provided, DataHarbor operates in **passthrough mode**. Any request path is admissible and no governed object is resolved. Only `_default` controls apply.
+
+This is useful for sources where you want DataHarbor to apply uniform controls without constraining the URL structure.
+
+## Cardinality
+
+DataHarbor derives cardinality from the last matched segment position:
+
+- If the last segment matched a **parameter slot** → `One` (single resource)
+- If the last segment matched a **literal** → `Many` (collection)
+
+For passthrough and all-parameter templates, cardinality defaults to `Many`.
+
+## What gets rejected
+
+Any request that fails admissibility is rejected **before** the upstream call is made. DataHarbor never proxies an ungoverned request.
+
+Common rejection reasons:
+
+- request path has more segments than the template allows
+- a literal segment in the request does not match the corresponding template literal
+- the source has no callable graph (missing enrollment data)

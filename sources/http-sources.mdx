@@ -29,7 +29,7 @@ The current docs model supports these upstream authentication patterns:
 
 ## Credential storage
 
-When you provide upstream credentials for an HTTP source, DataHarbor stores that secret material in **Azure Key Vault**.
+When you provide upstream credentials for an HTTP source, DataHarbor stores that secret material in a **secure secret store**.
 
 That includes values such as:
 
@@ -53,6 +53,9 @@ See [Data Pipeline](../core/data-pipeline) for the full flow and [Input Normaliz
 ## Next steps
 
 <CardGroup cols={2}>
+  <Card title="Route Matching" icon="route" href="./route-matching">
+    How DataHarbor validates requests against your path template
+  </Card>
   <Card title="Input Normalization" icon="arrow-down-up" href="./input-normalization">
     See how HTTP payloads normalize before controls run
   </Card>

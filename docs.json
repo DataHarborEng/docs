@@ -30,6 +30,16 @@
             ]
           },
           {
+            "group": "Connect Sources",
+            "root": "sources/index",
+            "directory": "card",
+            "pages": [
+              "sources/http-sources",
+              "sources/route-matching",
+              "sources/input-normalization"
+            ]
+          },
+          {
             "group": "Build Virtual APIs",
             "root": "core/index",
             "directory": "card",
@@ -52,15 +62,6 @@
               "control-blocks/access-control",
               "control-blocks/backplane-control",
               "control-blocks/data-fusion"
-            ]
-          },
-          {
-            "group": "Connect Sources",
-            "root": "sources/index",
-            "directory": "card",
-            "pages": [
-              "sources/http-sources",
-              "sources/input-normalization"
             ]
           },
           {
