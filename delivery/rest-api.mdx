@@ -41,14 +41,14 @@ curl -H "dataHarbor-api-key: mkp_your_marketplace_key" \
 
 ## Organization authorization relay
 
-When a lease owner [authorizes an organization](/core/api-access#organization-authorizations), that organization's existing marketplace key (`mkp_...`) works on the relay endpoint for the authorized Virtual API. No additional keys or auth types are needed.
+When a lease owner [authorizes an organization](../core/api-access#organization-authorizations), that organization's existing marketplace key (`mkp_...`) works on the relay endpoint for the authorized Virtual API. No additional keys or auth types are needed.
 
 ```bash
 curl -H "dataHarbor-api-key: mkp_partner_marketplace_key" \
   https://service.dataharbor.co/relay/166d4e26-3d40-4e44-806a-e56b93ebb121/customers
 ```
 
-Usage counts against the **consuming organization's** marketplace quota, not the lease owner's. See [Organization Authorizations](/core/api-access#organization-authorizations) for details.
+Usage counts against the **consuming organization's** marketplace quota, not the lease owner's. See [Organization Authorizations](../core/api-access#organization-authorizations) for details.
 
 ## Response shape
 
@@ -79,7 +79,7 @@ curl -H "dataHarbor-api-key: YOUR_API_KEY" \
   https://service.dataharbor.co/fetch/b097a4d3/customers.json
 ```
 
-If the Virtual API Configuration specifies `default_output_format`, that provides a default which can be overridden per-request via URL extension. See [Output Formatting](/delivery/output-formatting) for details.
+If the Virtual API Configuration specifies `default_output_format`, that provides a default which can be overridden per-request via URL extension. See [Output Formatting](./output-formatting) for details.
 
 ## Request/response flow
 
@@ -88,9 +88,13 @@ Every request passes through the governance layer:
 1. **Authenticate** — Validate API key
 2. **Authorize** — Check access controls (geo, IP, expiration)
 3. **Fetch** — Call upstream source
-4. **Apply controls** — Run the ordered control pipeline (redact, tokenize, transform)
-5. **Format** — Convert output if `default_output_format` is configured or a URL extension is present
-6. **Respond** — Return governed data
+4. **Normalize** — Convert upstream JSON, CSV, YAML, or Markdown into the canonical JSON model
+5. **Match object** — Select the object definition for the request path
+6. **Apply controls** — Run the ordered control pipeline (redact, tokenize, transform)
+7. **Format** — Convert output if `default_output_format` is configured or a URL extension is present
+8. **Respond** — Return governed data
+
+See [Data Pipeline](../core/data-pipeline) for the full end-to-end explanation.
 
 ## Example integration
 
@@ -112,10 +116,13 @@ const customers = await response.json();
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Output Formatting" icon="file-lines" href="/delivery/output-formatting">
+  <Card title="Input Normalization" icon="arrow-down-up" href="../sources/input-normalization">
+    Understand how upstream payloads are parsed before controls run
+  </Card>
+  <Card title="Output Formatting" icon="file-lines" href="./output-formatting">
     Convert responses to Markdown
   </Card>
-  <Card title="MCP Server Delivery" icon="robot" href="/delivery/mcp-server">
+  <Card title="MCP Server Delivery" icon="robot" href="./mcp-server">
     Enable AI agent access
   </Card>
 </CardGroup>

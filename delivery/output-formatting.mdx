@@ -10,7 +10,7 @@ description: Convert Virtual API responses to Markdown, CSV, or YAML — via spe
 Virtual API responses are JSON by default. Output formatting lets you convert responses to Markdown, CSV, or YAML — configured in your Virtual API Configuration, requested via URL extension, or negotiated through the HTTP `Accept` header. Especially useful for AI agents that present data to humans, or for feeding governed data directly into spreadsheets and configuration tools.
 
 <Info>
-  Output formatting runs **after** all privacy controls and data transforms. Your controls pipeline is unchanged — formatting just converts the final result.
+  Output formatting runs **after** [input normalization](../sources/input-normalization) and the ordered controls pipeline. It only changes how the final governed payload is rendered. See [Data Pipeline](../core/data-pipeline) for the full request flow.
 </Info>
 
 ## Quick start
@@ -31,124 +31,80 @@ objects:
 
 Every response from this Virtual API is now Markdown instead of JSON.
 
-## Configuration
+## Supported output formats
 
-Two optional top-level fields control formatting:
+| Format | Best for | Response `Content-Type` |
+|--------|----------|-------------------------|
+| `json` | System-to-system integrations and default runtime behavior | `application/json` |
+| `markdown` | AI agents, human-readable responses, quick inspection | `text/markdown; charset=utf-8` |
+| `csv` | Spreadsheets, BI tools, exports | `text/csv; charset=utf-8` |
+| `yaml` | Config workflows and human-readable structured output | `text/yaml; charset=utf-8` |
 
-| Field | Values | Default | Description |
-|-------|--------|---------|-------------|
-| `input_format` | `json`, `csv`, `yaml`, `markdown` | Auto-detected from upstream `Content-Type` | Declare the expected upstream format |
-| `default_output_format` | `json`, `markdown`, `csv`, `yaml` | *(omitted — JSON response)* | Declare the desired response format |
+## Requesting a format
 
-Both fields are completely optional. Omitting them preserves the current runtime behavior — normalize to JSON internally, then return JSON unless you explicitly request another output format.
+Use `default_output_format` to set a default, or request a format per call with a URL extension or `Accept` header.
 
-```yaml
-version: "0.3"
-input_format: json
-default_output_format: markdown
-objects:
-  _default:
-    controls:
-      - type: allow
-        fields: [name, description, status]
-```
+<Tabs>
+  <Tab title="Spec default">
+
+  Set `default_output_format` in the Virtual API Configuration when one format should be returned by default.
+
+  ```yaml
+  version: "0.3"
+  default_output_format: markdown
+  objects:
+    customers:
+      controls:
+        - type: allow
+          fields: [name, status]
+  ```
+
+  `default_output_format: json` is also valid when you want to make the contract explicit without changing behavior.
+
+  </Tab>
+  <Tab title="URL extension">
+
+  Append an extension to any data endpoint URL to request a format without changing the Virtual API Configuration.
+
+  ```bash
+  curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+    https://service.dataharbor.co/fetch/b097a4d3/customers.md
+
+  curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+    https://service.dataharbor.co/fetch/b097a4d3/customers.csv
+
+  curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+    https://service.dataharbor.co/fetch/b097a4d3/customers.yaml
+  ```
+
+  URL extensions work on both `/fetch/` and `/relay/` endpoints.
+
+  </Tab>
+  <Tab title="Accept header">
+
+  DataHarbor supports HTTP content negotiation via the `Accept` header.
+
+  | Accept value | Output format |
+  |---|---|
+  | `application/json` | JSON |
+  | `text/markdown` | Markdown |
+  | `text/csv` | CSV |
+  | `text/yaml` | YAML |
+
+  ```bash
+  curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+    -H "Accept: text/markdown" \
+    https://service.dataharbor.co/fetch/b097a4d3/customers
+  ```
+
+  Use this when the caller decides the best format at request time.
+
+  </Tab>
+</Tabs>
 
 <Tip>
-  `input_format` is rarely needed. DataHarbor auto-detects the upstream format from the `Content-Type` header (`application/json`, `text/csv`, `text/yaml`, `application/yaml`, `text/markdown`). Only set it when the upstream API returns a non-standard content type that doesn't match the actual payload format.
+  `input_format` is a separate setting used during [input normalization](../sources/input-normalization). It affects how upstream data is parsed, not how the response is rendered.
 </Tip>
-
-### Setting `default_output_format: json`
-
-You can explicitly set `default_output_format: json` to signal that the response should remain JSON. This is a passthrough — no conversion happens. It's useful for documentation clarity or when you want to be explicit about the contract.
-
-## URL extension format
-
-Append a format extension to any data endpoint URL to request a specific output format without changing the Virtual API Configuration:
-
-```bash
-# Markdown output
-curl -H "dataHarbor-api-key: YOUR_API_KEY" \
-  https://service.dataharbor.co/fetch/b097a4d3/customers.md
-
-# CSV output
-curl -H "dataHarbor-api-key: YOUR_API_KEY" \
-  https://service.dataharbor.co/fetch/b097a4d3/customers.csv
-
-# YAML output
-curl -H "dataHarbor-api-key: YOUR_API_KEY" \
-  https://service.dataharbor.co/fetch/b097a4d3/customers.yaml
-
-# Explicit JSON output
-curl -H "dataHarbor-api-key: YOUR_API_KEY" \
-  https://service.dataharbor.co/fetch/b097a4d3/customers.json
-```
-
-This works on both `/fetch/` and `/relay/` endpoints.
-
-## Accept header negotiation
-
-DataHarbor supports HTTP content negotiation via the `Accept` header per [RFC 9110](https://httpwg.org/specs/rfc9110.html#field.accept). Clients can request a specific output format by including the appropriate media type:
-
-| Accept value | Output format |
-|---|---|
-| `application/json` | JSON |
-| `text/markdown` | Markdown |
-| `text/csv` | CSV |
-| `text/yaml` | YAML |
-
-```bash
-# Request Markdown via Accept header
-curl -H "dataHarbor-api-key: YOUR_API_KEY" \
-  -H "Accept: text/markdown" \
-  https://service.dataharbor.co/fetch/b097a4d3/customers
-
-# Request CSV via Accept header
-curl -H "dataHarbor-api-key: YOUR_API_KEY" \
-  -H "Accept: text/csv" \
-  https://service.dataharbor.co/fetch/b097a4d3/customers
-
-# Request YAML via Accept header
-curl -H "dataHarbor-api-key: YOUR_API_KEY" \
-  -H "Accept: text/yaml" \
-  https://service.dataharbor.co/fetch/b097a4d3/customers
-```
-
-### AI agents and Accept headers
-
-This is especially useful for AI agents, which typically send `Accept` headers expressing their format preferences. DataHarbor respects these automatically:
-
-| Agent | Accept header sent |
-|---|---|
-| Claude Code | `Accept: text/markdown, text/html, */*` |
-| Cursor | `Accept: text/markdown, text/plain;q=0.9, */*;q=0.8` |
-
-Because these agents prefer `text/markdown`, DataHarbor returns Markdown without any spec or URL configuration — the agent gets the format it wants out of the box.
-
-### Quality values (q-values)
-
-The `Accept` header supports quality values (`q`) to express preference. Values range from `0` to `1`, where `1.0` is the default when omitted and `q=0` means "never send this format":
-
-```
-Accept: text/markdown, text/csv;q=0.5, application/json;q=0.2
-```
-
-DataHarbor picks the supported format with the highest q-value. In this example: Markdown (`q=1.0` implicit) > CSV (`q=0.5`) > JSON (`q=0.2`).
-
-### Error handling
-
-When the `Accept` header explicitly excludes all supported formats and contains no wildcard fallback, DataHarbor returns `406 Not Acceptable`. This is rare in practice — most clients include `*/*` as a fallback.
-
-<Info>
-  When Accept is `*/*` or missing, DataHarbor falls through to the spec default or upstream format — no 406.
-</Info>
-
-### Caching
-
-DataHarbor always includes `Vary: Accept` in the response headers so that caches and CDNs store separate entries per Accept value.
-
-### Works through MCP
-
-Accept header negotiation works through MCProxy and MCP delivery. When an AI agent connects via MCP, its `Accept` header is forwarded to the lease endpoint, so the agent's format preference is respected end-to-end.
 
 ## Precedence
 
@@ -157,11 +113,11 @@ Format selection follows a four-tier precedence (highest to lowest):
 | Priority | Source | Example |
 |---|---|---|
 | 1 | URL extension | `.md`, `.csv`, `.yaml`, `.json` |
-| 2 | Accept header | `Accept: text/markdown` |
+| 2 | `Accept` header | `Accept: text/markdown` |
 | 3 | Spec default | `default_output_format: markdown` |
-| 4 | Upstream format | Whatever the upstream API returns |
+| 4 | Runtime default | JSON |
 
-The first match wins. Some examples:
+The first match wins.
 
 | `default_output_format` | URL extension | Accept header | Result |
 |---|---|---|---|
@@ -170,165 +126,23 @@ The first match wins. Some examples:
 | `markdown` | *(none)* | *(none)* | **Markdown** — spec default applies |
 | *(omitted)* | *(none)* | `text/csv` | **CSV** — Accept header applies |
 | *(omitted)* | `.md` | `text/csv` | **Markdown** — URL extension wins |
-| *(omitted)* | *(none)* | *(none)* | **JSON** — no formatting |
+| *(omitted)* | *(none)* | *(none)* | **JSON** — default runtime behavior |
 
-## Markdown rendering
+## How each format renders
 
-DataHarbor uses **structure-driven rendering** — it inspects the shape of the JSON and picks the best Markdown representation automatically.
+### Markdown
 
-### Array of objects → Table
-
-```json
-[
-  { "name": "Alice", "role": "Admin", "status": "active" },
-  { "name": "Bob", "role": "Viewer", "status": "inactive" }
-]
-```
-
-```markdown
-| name | role | status |
-|---|---|---|
-| Alice | Admin | active |
-| Bob | Viewer | inactive |
-```
-
-### Single object → Key-value list
-
-```json
-{ "name": "Alice", "email": "tok_abc123", "role": "Admin" }
-```
-
-```markdown
-**name:** Alice
-**email:** tok_abc123
-**role:** Admin
-```
-
-### Nested object → Headers + structure
-
-```json
-{
-  "user": {
-    "name": "Alice",
-    "address": { "city": "Portland", "state": "OR" }
-  },
-  "orders": [
-    { "id": 1, "total": 25.00 },
-    { "id": 2, "total": 42.50 }
-  ]
-}
-```
-
-```markdown
-## user
-
-**name:** Alice
-
-### address
-
-**city:** Portland
-**state:** OR
-
-## orders
-
-| id | total |
-|---|---|
-| 1 | 25 |
-| 2 | 42.5 |
-```
-
-### Rendering rules
+Markdown output is structure-driven.
 
 | JSON shape | Markdown representation |
 |---|---|
-| Array of flat objects | Table with column headers from keys |
+| Array of flat objects | Table |
 | Single flat object | Key-value list |
-| Nested object | Hierarchical headers + nested content |
-| Array of scalars | Bulleted list |
+| Nested object | Headings plus nested content |
+| Array of scalars | Bullet list |
 | Scalar value | Plain text |
 
-## CSV rendering
-
-CSV output follows [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180). Ideal for importing governed data into spreadsheets, data warehouses, or BI tools.
-
-### Array of objects → CSV table
-
-```json
-[
-  { "name": "Alice", "role": "Admin", "status": "active" },
-  { "name": "Bob", "role": "Viewer", "status": "inactive" }
-]
-```
-
-```csv
-name,role,status
-Alice,Admin,active
-Bob,Viewer,inactive
-```
-
-### Single object → Header + row
-
-```json
-{ "name": "Alice", "email": "tok_abc123", "role": "Admin" }
-```
-
-```csv
-name,email,role
-Alice,tok_abc123,Admin
-```
-
-### Rendering rules
-
-| JSON shape | CSV representation |
-|---|---|
-| Array of flat objects | Header row from union of all keys + data rows |
-| Single flat object | Header row + single data row |
-| Nested objects/arrays | Serialized as JSON strings in the cell |
-| Null values | Empty cell |
-| Scalar value | Plain text |
-
-Values containing commas, quotes, or newlines are automatically quoted per RFC 4180. Quotes inside values are escaped by doubling (`""`).
-
-<Info>
-  Objects with different key sets are handled gracefully — the header row contains the union of all keys, and missing values render as empty cells.
-</Info>
-
-## YAML rendering
-
-YAML output uses standard [YAML 1.2](https://yaml.org/spec/1.2.2/) formatting. Useful for configuration pipelines, infrastructure-as-code workflows, or agents that consume structured data in a human-readable format.
-
-### Object → Key-value pairs
-
-```json
-{ "name": "Alice", "email": "tok_abc123", "role": "Admin" }
-```
-
-```yaml
-name: Alice
-email: tok_abc123
-role: Admin
-```
-
-### Nested object → Indented structure
-
-```json
-{
-  "user": {
-    "name": "Alice",
-    "address": { "city": "Portland", "state": "OR" }
-  }
-}
-```
-
-```yaml
-user:
-  name: Alice
-  address:
-    city: Portland
-    state: OR
-```
-
-### Array of objects → Sequence of mappings
+Example:
 
 ```json
 [
@@ -337,148 +151,83 @@ user:
 ]
 ```
 
-```yaml
-- name: Alice
-  role: Admin
-- name: Bob
-  role: Viewer
+```markdown
+| name | role |
+|---|---|
+| Alice | Admin |
+| Bob | Viewer |
 ```
 
-### Rendering rules
+See [Markdown Input](./markdown) if your upstream source itself is Markdown.
+
+### CSV
+
+CSV output follows [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180).
+
+| JSON shape | CSV representation |
+|---|---|
+| Array of flat objects | Header row plus one row per object |
+| Single flat object | Header row plus a single row |
+| Nested objects or arrays | Serialized as JSON strings in the cell |
+| Null values | Empty cell |
+| Scalar value | Plain text |
+
+Values containing commas, quotes, or newlines are automatically quoted. Objects with different key sets are handled by using the union of all keys in the header row.
+
+### YAML
+
+YAML output uses standard [YAML 1.2](https://yaml.org/spec/1.2.2/) formatting.
 
 | JSON shape | YAML representation |
 |---|---|
-| Object | `key: value` pairs, nested objects indented 2 spaces |
+| Object | `key: value` pairs |
 | Array of objects | `- key: value` block sequence |
 | Array of scalars | `- item` list |
-| Strings with special chars | Quoted with escape sequences |
+| Strings with special characters | Quoted with escape sequences |
 | Numbers and booleans | Unquoted |
 | Null | `null` |
 
 ## Response headers
 
-The response `Content-Type` changes based on the output format:
+The response `Content-Type` reflects the selected output format, and `Vary: Accept` is always included so caches differentiate negotiated responses correctly.
 
-| Output format | Content-Type |
-|---|---|
-| JSON (default) | `application/json` |
-| Markdown | `text/markdown; charset=utf-8` |
-| CSV | `text/csv; charset=utf-8` |
-| YAML | `text/yaml; charset=utf-8` |
+## Advanced HTTP negotiation
 
-`Vary: Accept` is always included in responses so that caches correctly differentiate responses served via content negotiation.
+<AccordionGroup>
+  <Accordion title="AI agents and Accept headers">
+    Many AI agents already send `Accept` headers that prefer Markdown. For example, Claude Code typically sends `Accept: text/markdown, text/html, */*`, which means DataHarbor can return Markdown without any spec or URL changes.
 
-## Works everywhere
+    This behavior also carries through MCP delivery when the agent's `Accept` header is forwarded to the lease endpoint.
+  </Accordion>
+  <Accordion title="Quality values (q-values)">
+    The `Accept` header supports quality values (`q`) to express preference.
 
-Output formatting is applied in the data pipeline, so every delivery mechanism benefits automatically:
+    ```text
+    Accept: text/markdown, text/csv;q=0.5, application/json;q=0.2
+    ```
 
-- **REST API** — `/fetch/` and `/relay/` endpoints return formatted responses
-- **MCP Server** — AI agents receive Markdown directly from their data tools
-- **URL extensions** — Append `.md` for quick Markdown access from `curl` or scripts
-- **Accept header** — Clients negotiate their preferred format automatically via HTTP content negotiation
+    DataHarbor picks the supported format with the highest q-value.
+  </Accordion>
+  <Accordion title="406 responses and caching">
+    When the `Accept` header explicitly excludes all supported formats and contains no wildcard fallback, DataHarbor returns `406 Not Acceptable`.
 
-## Input normalization
-
-DataHarbor's controls pipeline operates on a canonical JSON model internally. When the upstream API returns a non-JSON format, DataHarbor automatically normalizes it to JSON before controls run, then converts to your requested output format.
-
-```
-Upstream API → Normalize to JSON → Apply Controls → Output Format → Respond
-```
-
-This means you can enroll a CSV, YAML, or Markdown API, apply the same privacy controls and transforms, and deliver the result in any output format.
-
-### Supported input formats
-
-| Format | Content-Type | Normalized shape |
-|--------|-------------|-----------------|
-| JSON | `application/json`, `application/*+json` | Parsed directly — no conversion |
-| CSV | `text/csv` | Array of objects, one per row, keyed by header columns |
-| YAML | `text/yaml`, `application/yaml`, `application/x-yaml` | JSON-compatible subset: mappings, sequences, scalars |
-| Markdown | `text/markdown` | Document object with `content` and optional `frontmatter` |
-
-### CSV normalization
-
-CSV input is parsed as headered rectangular data. The first row defines the column names, and each subsequent row becomes a JSON object:
-
-```csv
-name,age,active
-Alice,30,true
-Bob,25,false
-```
-
-Normalizes to:
-
-```json
-[
-  { "name": "Alice", "age": 30, "active": true },
-  { "name": "Bob", "age": 25, "active": false }
-]
-```
-
-Type coercion is conservative: obvious booleans (`true`/`false`), integers, and decimals are converted. Everything else — dates, GUIDs, leading-zero identifiers — stays as a string.
-
-### YAML normalization
-
-YAML input is normalized using the JSON-compatible subset of YAML: mappings become objects, sequences become arrays, and scalars are coerced to strings, numbers, booleans, or null.
-
-```yaml
-name: Alice
-tags:
-  - admin
-  - owner
-active: true
-```
-
-Normalizes to:
-
-```json
-{
-  "name": "Alice",
-  "tags": ["admin", "owner"],
-  "active": true
-}
-```
-
-<Warning>
-  Advanced YAML constructs that don't map to JSON — anchors/aliases, tags, merge keys, multi-document streams, and non-finite floats (Infinity, NaN) — are rejected with a descriptive error. Only the JSON-compatible subset of YAML is supported.
-</Warning>
-
-### Markdown normalization
-
-Markdown input is handled in **document mode**. DataHarbor normalizes the payload into a JSON object with a `content` string and optional `frontmatter` object when YAML front matter is present.
-
-Your controls then target the normalized JSON model, such as `content` or `frontmatter.title`.
-
-See [Markdown](./markdown) for the full normalized shape, front matter rules, detection nuances, and limitations.
-
-### Body sniffing
-
-When the upstream `Content-Type` header is missing or unrecognized and no `input_format` is declared, DataHarbor inspects the first 512 bytes of the response body to detect the format:
-
-- Starts with `{` or `[` → JSON
-- Two rows with matching comma-separated field counts → CSV
-- Starts with `---` or a `key:` mapping → YAML
-- Starts with valid front matter plus non-empty body, or starts with `#` → Markdown
-
-If detection is inconclusive, DataHarbor defaults to JSON.
-
-## Pipeline position
-
-Formatting runs as the **last step** before the response is returned:
-
-```
-Upstream API → Authenticate → Authorize → Fetch → Normalize → Apply Controls → Output Format → Respond
-```
-
-Your privacy controls and data transforms execute on the normalized JSON model. The formatted output reflects the fully governed, transformed data. When the upstream is already JSON, normalization is a zero-cost passthrough.
+    When `Accept` is `*/*` or missing, DataHarbor falls through to the spec default or JSON behavior instead. Responses always include `Vary: Accept` for cache correctness.
+  </Accordion>
+</AccordionGroup>
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="MCP Server Delivery" icon="robot" href="/delivery/mcp-server">
-    AI agent access with governed data
+  <Card title="Connect Sources" icon="database-zap" href="../sources">
+    Start with how upstream formats enter DataHarbor
   </Card>
-  <Card title="Data Control" icon="shield" href="/control-blocks/data-control">
-    Field-level privacy controls
+  <Card title="Input Normalization" icon="arrow-down-up" href="../sources/input-normalization">
+    See how upstream JSON, CSV, YAML, and Markdown are parsed
+  </Card>
+  <Card title="Markdown Input" icon="file-text" href="./markdown">
+    Learn how Markdown sources normalize before controls run
+  </Card>
+  <Card title="REST API Delivery" icon="globe" href="./rest-api">
+    Request formatted responses over fetch and relay endpoints
   </Card>
 </CardGroup>

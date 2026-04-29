@@ -2,7 +2,6 @@
 title: Data Transform
 description: Real-time field transformations applied at the data boundary.
 sidebarTitle: Data Transform
-icon: shuffle
 ---
 
 # Data Transform
@@ -10,6 +9,10 @@ icon: shuffle
 **Transform in flight, not in a pipeline.**
 
 Real-time field transformations applied at the data boundary. No ETL pipelines or data duplication required.
+
+<Info>
+  Data Transform shares the same field path rules as Data Control. See [Field Targeting](./field-targeting) for nested paths, arrays, and `required` behavior.
+</Info>
 
 <Tip>
   You'll see `fields` written two ways in our examples — both are valid YAML and produce identical results:
@@ -188,10 +191,13 @@ Use `delete` when the field should disappear completely. Use `redact` when the f
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Data Control" icon="shield" href="/control-blocks/data-control">
+  <Card title="Field Targeting" icon="crosshair" href="./field-targeting">
+    Learn how transform paths work with nested objects and arrays
+  </Card>
+  <Card title="Data Control" icon="shield" href="./data-control">
     Redaction, tokenization, anonymization
   </Card>
-  <Card title="Access Control" icon="lock" href="/control-blocks/access-control">
-    Geo restrictions and expiration
+  <Card title="Control Block Reference" icon="code" href="../api-reference/control-block-reference">
+    Detailed transform options and execution rules
   </Card>
 </CardGroup>

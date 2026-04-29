@@ -17,31 +17,9 @@ Each Virtual API:
 
 ### Object Definitions
 
-Virtual APIs use a YAML Virtual API Configuration with an `objects` key containing named object definitions. Each object definition specifies controls that apply to that resource type.
+Virtual APIs use a YAML configuration with an `objects` key containing named object definitions. Each object definition specifies the ordered `controls` pipeline for that resource type.
 
-Given an API with these endpoints:
-- `/properties` — list of properties
-- `/properties/{propertyId}/inspections` — inspections for a property
-- `/properties/{propertyId}/inspections/{inspectionId}/issues` — issues for an inspection
-
-This configuration defines controls for each object type:
-
-```yaml
-version: "0.3"
-objects:
-  properties:    # matches /properties, /properties/{propertyId}
-    controls:
-      - type: redact
-        fields: [ownerFirstName, ownerLastName]
-  inspections:   # matches .../inspections, .../inspections/{inspectionId}
-    controls:
-      - type: redact
-        fields: [inspectorFirstName]
-  issues:        # matches .../issues, .../issues/{issueId}
-    controls:
-      - type: redact
-        fields: [title]
-```
+See [Virtual APIs](./core/virtual-apis) for a full example and [Data Pipeline](./core/data-pipeline) for how object matching fits into request processing.
 
 ### URL Matching
 
@@ -53,10 +31,6 @@ For a request to `/properties/{propertyId}/inspections/{inspectionId}/issues`, t
 3. If the last segment does not match, checks the second-to-last path segment instead
 
 Only one object definition is selected per request. If no named object matches, `_default` is used when present.
-
-This works for both collections and single resources:
-- `/properties/{propertyId}/inspections/{inspectionId}/issues` → applies `issues` controls to the list
-- `/properties/{propertyId}/inspections/{inspectionId}/issues/{issueId}` → applies `issues` controls to that single object
 
 ### The _default Object
 
@@ -83,11 +57,24 @@ When a request matches an undefined object, `_default` controls apply. When a re
 
 | Block | Purpose |
 |-------|---------|
-| **[Data Control](/control-blocks/data-control)** | Privacy operations: redact, tokenize, anonymize |
-| **[Data Transform](/control-blocks/data-transform)** | Field transformations: combine, coalesce |
-| **[Access Control](/control-blocks/access-control)** | Access rules: geo restrictions, expiration, shutdown |
+| **[Data Control](./control-blocks/data-control)** | Privacy operations: redact, tokenize, anonymize, mask, hash |
+| **[Data Transform](./control-blocks/data-transform)** | Field transformations: combine, coalesce, delete |
+| **[Access Control](./control-blocks/access-control)** | Access rules: geo restrictions, expiration, shutdown |
 
 Control Blocks are composable. Apply as many as needed to a single Virtual API.
+
+## Data Pipeline
+
+Every request flows through the same high-level pipeline:
+
+1. Authenticate and authorize the caller
+2. Fetch the upstream payload
+3. Normalize it into DataHarbor's canonical JSON model
+4. Match the correct object definition
+5. Run the ordered controls pipeline
+6. Format the result for delivery
+
+See [Data Pipeline](./core/data-pipeline) for the full end-to-end flow.
 
 ## Control Set
 

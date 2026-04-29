@@ -7,73 +7,80 @@ description: Get up and running with DataHarbor in 5 minutes.
 
 Create your first governed Virtual API in three steps.
 
-## 1. Enroll your data source
+<Steps>
+  <Step title="Enroll your data source">
+    Connect your existing REST or document API to DataHarbor.
 
-Connect your existing REST/JSON API to DataHarbor.
+    ```yaml
+    # Example enrollment
+    source:
+      name: customer-api
+      type: rest
+      base_url: https://api.yourcompany.com
+      auth:
+        type: bearer
+        token: ${CUSTOMER_API_TOKEN}
+    ```
+  </Step>
 
-```yaml
-# Example enrollment
-source:
-  name: customer-api
-  type: rest
-  base_url: https://api.yourcompany.com
-  auth:
-    type: bearer
-    token: ${CUSTOMER_API_TOKEN}
-```
+  <Step title="Define a Virtual API">
+    Create the v0.3 Virtual API Configuration that governs the routes you want to expose.
 
-## 2. Define a Virtual API
+    ```yaml
+    version: "0.3"
+    objects:
+      customers:
+        controls:
+          - type: redact
+            fields:
+              - ssn
+              - date_of_birth
 
-Create the v0.3 Virtual API Configuration that governs the routes you want to expose.
+          - type: tokenize
+            fields:
+              - email
+              - phone
+    ```
+  </Step>
 
-```yaml
-version: "0.3"
-objects:
-  customers:
-    controls:
-      - type: redact
-        fields:
-          - ssn
-          - date_of_birth
+  <Step title="Publish and consume">
+    Your Virtual API is instantly available via REST or MCP delivery.
 
-      - type: tokenize
-        fields:
-          - email
-          - phone
-```
+    ```bash
+    curl -H "dataHarbor-api-key: YOUR_API_KEY" \
+      https://service.dataharbor.co/fetch/YOUR_LEASE_ID/customers
+    ```
 
-## 3. Publish and consume
+    The response shape matches your upstream API, with your controls already applied:
 
-Your Virtual API is instantly available via REST or MCP endpoint.
-
-```bash
-# REST API
-curl -H "dataHarbor-api-key: YOUR_API_KEY" \
-  https://service.dataharbor.co/fetch/YOUR_LEASE_ID/customers
-```
-
-The response shape matches your upstream API, with your controls already applied:
-
-```json
-[
-  {
-    "id": "cust_123",
-    "name": "Jane Doe",
-    "email": "tok_abc123",
-    "phone": "tok_def456",
-    "ssn": "",
-    "date_of_birth": ""
-  }
-]
-```
+    ```json
+    [
+      {
+        "id": "cust_123",
+        "name": "Jane Doe",
+        "email": "tok_abc123",
+        "phone": "tok_def456",
+        "ssn": "",
+        "date_of_birth": ""
+      }
+    ]
+    ```
+  </Step>
+</Steps>
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Virtual APIs" icon="layer-group" href="/core/virtual-apis">
+  <Card title="Connect Sources" icon="arrow-down-up" href="./sources">
+    See the source-side docs for HTTP sources, route matching, and normalization
+  </Card>
+  <Card title="Build Virtual APIs" icon="layer-group" href="./core">
+    Understand object matching, pipeline behavior, and delivery setup
+  </Card>
+  <Card title="Virtual APIs" icon="file-code" href="./core/virtual-apis">
     Deep dive into Virtual API configuration
   </Card>
-  <Card title="Data Control" icon="shield" href="/control-blocks/data-control">
+  <Card title="Data Control" icon="shield" href="./control-blocks/data-control">
     Learn about redaction, tokenization, and anonymization
   </Card>
 </CardGroup>

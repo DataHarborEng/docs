@@ -1,0 +1,109 @@
+---
+title: Data Pipeline
+description: Understand how DataHarbor normalizes, governs, transforms, and formats data for every request.
+---
+
+# Data Pipeline
+
+**Different sources in. One governed response out.**
+
+Every DataHarbor request follows the same pipeline. The important part is that governance happens on a canonical JSON model, not on raw upstream bytes.
+
+```text
+Authenticate → Authorize → Fetch → Normalize → Match object → Apply controls → Format output → Respond
+```
+
+## The request flow
+
+<Steps>
+  <Step title="Authenticate and authorize">
+    DataHarbor validates the caller's key, visibility rules, expiration, and other access controls before the upstream request is processed.
+  </Step>
+
+  <Step title="Fetch the upstream payload">
+    DataHarbor calls the enrolled source using the request path and source credentials configured for the Virtual API.
+  </Step>
+
+  <Step title="Normalize into canonical JSON">
+    JSON stays JSON. CSV becomes arrays of objects. YAML becomes JSON-compatible objects and arrays. Markdown becomes a document object with `content` and optional `frontmatter`.
+
+    See [Input Normalization](../sources/input-normalization).
+  </Step>
+
+  <Step title="Match the object definition">
+    Once the payload is normalized, DataHarbor matches the request path to the correct object definition inside `objects.<objectName>`. That determines which ordered `controls` list will run.
+
+    See [Virtual APIs](./virtual-apis).
+  </Step>
+
+  <Step title="Run the ordered controls pipeline">
+    Data Control and Data Transform both live in the same `controls` array. They execute top-to-bottom, so later steps see values produced by earlier ones.
+
+    Typical sequences look like this:
+
+    - create a derived field with `combine`
+    - hash or anonymize the derived field
+    - redact the original source field
+
+    See [Data Control](../control-blocks/data-control), [Data Transform](../control-blocks/data-transform), and [Field Targeting](../control-blocks/field-targeting).
+  </Step>
+
+  <Step title="Format the governed result">
+    After controls finish, DataHarbor can return JSON, Markdown, CSV, or YAML. Formatting is the final rendering step; it does not change the governance logic.
+
+    See [Output Formatting](../delivery/output-formatting).
+  </Step>
+
+  <Step title="Deliver the response">
+    The final governed response is returned through REST or MCP using the same underlying pipeline.
+  </Step>
+</Steps>
+
+## Why the pipeline matters
+
+- You write one set of control rules even when the upstream source is not JSON.
+- You can combine privacy controls and transforms in one ordered pipeline.
+- Output formatting stays separate from governance, so the same rules apply whether the caller wants JSON, Markdown, CSV, or YAML.
+
+## Example
+
+```yaml
+version: "0.3"
+input_format: csv
+default_output_format: markdown
+objects:
+  customers:
+    controls:
+      - type: combine
+        fields: [first_name, last_name]
+        into: full_name
+        separator: " "
+      - type: tokenize
+        fields: [email]
+      - type: redact
+        fields: [ssn]
+```
+
+For a request that matches `customers`, the pipeline looks like this:
+
+1. Parse CSV rows into objects.
+2. Match the `customers` object definition.
+3. Build `full_name`, tokenize `email`, and redact `ssn`.
+4. Render the final governed payload as Markdown.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Virtual APIs" icon="layer-group" href="./virtual-apis">
+    Understand how object definitions and controls are configured
+  </Card>
+  <Card title="Input Normalization" icon="arrow-down-up" href="../sources/input-normalization">
+    See how JSON, CSV, YAML, and Markdown are parsed
+  </Card>
+  <Card title="Govern Data" icon="shield" href="../control-blocks">
+    Explore privacy controls, transforms, and field targeting
+  </Card>
+  <Card title="Output Formatting" icon="file-lines" href="../delivery/output-formatting">
+    Learn how the final governed payload is rendered
+  </Card>
+</CardGroup>

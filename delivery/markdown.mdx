@@ -1,18 +1,17 @@
 ---
-title: Markdown
-description: How DataHarbor handles Markdown as an upstream input and a delivered output, including front matter rules, normalization shape, detection, and limitations.
+title: Markdown Input
+description: How DataHarbor normalizes Markdown input into canonical JSON, including front matter rules, detection, and limitations.
 ---
 
-# Markdown
+# Markdown Input
 
-DataHarbor supports Markdown in two distinct ways:
+DataHarbor supports Markdown as an upstream input format. Before controls run, it normalizes the document into DataHarbor's canonical JSON model.
 
-| Direction | What DataHarbor does |
-|---|---|
-| Markdown input | Normalizes the document into the internal JSON model before controls run |
-| Markdown output | Renders the final governed JSON payload as Markdown for the response |
+<Info>
+  Use this page when your **source** data is Markdown. If you want to return Markdown to clients, see [Output Formatting](./output-formatting).
+</Info>
 
-These two paths are related, but they are not symmetric. DataHarbor does not treat Markdown as a fully structured schema.
+Markdown input does not behave like a fully structured schema. DataHarbor treats it as a document with optional front matter, not as an AST of headings, lists, and tables.
 
 ## How DataHarbor thinks about Markdown
 
@@ -180,60 +179,11 @@ Markdown is recognized when the body:
 
 This means front-matter-only documents are ambiguous during sniffing. If the payload is only a fenced YAML block with no Markdown body, declare `input_format: markdown` or send `Content-Type: text/markdown`.
 
-## Markdown As Output
-
-Markdown output is generated from the final governed JSON payload.
-
-You can request it with:
-
-- `default_output_format: markdown`
-- A `.md` URL extension
-- `Accept: text/markdown`
-
-```yaml
-version: "0.3"
-default_output_format: markdown
-objects:
-  customers:
-    controls:
-      - type: allow
-        fields: [name, email, status]
-```
-
-DataHarbor uses structure-driven rendering for Markdown output:
-
-| JSON shape | Markdown representation |
-|---|---|
-| Array of flat objects | Table |
-| Single flat object | Key-value list |
-| Nested object | Headings plus nested content |
-| Array of scalars | Bullet list |
-| Scalar value | Plain text |
-
-See [Output Formatting](./output-formatting) for full examples of Markdown, CSV, and YAML delivery.
-
-### Markdown output is generated, not round-tripped
-
-Markdown input does not round-trip byte-for-byte.
-
-DataHarbor always normalizes upstream Markdown into the canonical JSON model first. If you later request Markdown output, DataHarbor renders Markdown from that final JSON model.
-
-That means:
-
-- The response can be shaped differently from the original upstream Markdown
-- Front matter becomes structured JSON during controls execution
-- Output Markdown reflects the final governed data, not the original raw document bytes
-
-<Info>
-  If you do not explicitly request Markdown output, the current runtime returns the normalized JSON payload. Markdown is an input format and an optional output format, not a guaranteed round-trip transport.
-</Info>
-
 ## Best Practices
 
 - Send `Content-Type: text/markdown` whenever you control the upstream API
 - Use front matter for structured metadata you want to target in controls
 - Treat `content` as a whole-document field, not as parsed sections
-- Request Markdown output only when you want a human-friendly rendered response
 - Use `input_format: markdown` when the upstream content type is missing, generic, or ambiguous
 
 ## When To Use Markdown
@@ -254,10 +204,13 @@ Markdown is usually the wrong choice when:
 ## Next Steps
 
 <CardGroup cols={2}>
+  <Card title="Input Normalization" icon="arrow-down-up" href="../sources/input-normalization">
+    See how Markdown fits into the broader normalization stage
+  </Card>
   <Card title="Output Formatting" icon="file-lines" href="./output-formatting">
-    Request Markdown, CSV, YAML, or JSON responses
+    Return Markdown, CSV, YAML, or JSON after controls run
   </Card>
   <Card title="YAML Reference" icon="code" href="../api-reference/yaml-reference">
-    Configure input_format and default_output_format
+    Configure `input_format` and `default_output_format`
   </Card>
 </CardGroup>

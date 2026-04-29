@@ -2,7 +2,6 @@
 title: Global Marketplace
 description: Publish governed Virtual APIs for discovery and monetization in the DataHarbor registry.
 sidebarTitle: Global Marketplace
-icon: store
 tag: Preview
 ---
 
@@ -24,7 +23,7 @@ The registry is the machine-readable index of all listed agents. It's live today
 https://service.dataharbor.co/api/registry/search
 ```
 
-AI agents query the registry to discover governed endpoints ready for instant connection. Every Virtual API with **Listed Open** [visibility](/core/agents#listed-open) is automatically indexed.
+AI agents query the registry to discover governed endpoints ready for instant connection. Every Virtual API with **Listed Open** [visibility](../core/agents#listed-open) is automatically indexed.
 
 For MCP-native discovery, clients can also start at:
 
@@ -37,9 +36,9 @@ The platform MCP endpoint is a discovery surface, not an anonymous data-access s
 ## How it works
 
 1. **Create a Virtual API** — Define your source, apply privacy controls, and set access rules.
-2. **Set visibility to Listed Open** — Your Virtual API must have [Listed Open](/core/agents#listed-open) visibility to appear in the registry and catalog.
+2. **Set visibility to Listed Open** — Your Virtual API must have [Listed Open](../core/agents#listed-open) visibility to appear in the registry and catalog.
 3. **Buyers discover and connect** — Buyers browse listings, preview schemas, see governance policies, create a marketplace key from the account settings page, and connect.
-4. **Authorize specific organizations** — As an alternative to public listing, data owners can authorize specific partner organizations for direct relay access via [Organization Authorizations](/core/api-access#organization-authorizations). Authorized orgs use their existing marketplace key — no new credentials required.
+4. **Authorize specific organizations** — As an alternative to public listing, data owners can authorize specific partner organizations for direct relay access via [Organization Authorizations](../core/api-access#organization-authorizations). Authorized orgs use their existing marketplace key — no new credentials required.
 5. **Access flows through controls** — Every request goes through your Virtual API's governance. Usage is metered, logged, and auditable. Revoke anytime.
 
 ## Visibility requirement
@@ -53,7 +52,7 @@ Only Virtual APIs with **Listed Open** visibility appear in the Global Marketpla
 | Unlisted Open | No | No |
 | **Listed Open** | **Yes** | **Yes** |
 
-To configure visibility, see [Agent Visibility](/core/agents).
+To configure visibility, see [Agent Visibility](../core/agents).
 
 ## Agent Catalog
 
@@ -87,10 +86,10 @@ Every marketplace consumer is bound by your Virtual API's controls:
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Agent Visibility" icon="eye" href="/core/agents">
-    Configure visibility levels
+  <Card title="Agent Visibility" icon="eye" href="../core/agents">
+    Configure how listed Virtual APIs are discovered
   </Card>
-  <Card title="Private Marketplace" icon="building" href="/marketplace/private">
+  <Card title="Private Marketplace" icon="building" href="./private">
     Internal data catalog
   </Card>
 </CardGroup>

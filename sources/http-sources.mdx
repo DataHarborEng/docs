@@ -1,0 +1,65 @@
+---
+title: HTTP Sources
+description: Connect HTTP sources to DataHarbor and handle authentication material safely.
+---
+
+# HTTP Sources
+
+HTTP sources are the current source model for DataHarbor. In practice, this means REST-style endpoints that return JSON today, plus other payload formats like CSV, YAML, and Markdown that DataHarbor can normalize before controls run.
+
+## What you provide
+
+When you connect an HTTP source, you typically define:
+
+- a base URL for the upstream service
+- a request path template that describes the resource hierarchy
+- the upstream authentication method, when one is required
+
+See [Enrolling Data Sources](../core/enrolling-data-sources) for the current enrollment flow and path-template behavior.
+
+## Authentication
+
+The current docs model supports these upstream authentication patterns:
+
+| Method | Typical use |
+|--------|-------------|
+| Public | Source does not require credentials |
+| API key | Source expects a key in a request header |
+| Basic auth | Source expects a username and password |
+
+## Credential storage
+
+When you provide upstream credentials for an HTTP source, DataHarbor stores that secret material in a **secure secret store**.
+
+That includes values such as:
+
+- upstream API keys
+- basic auth usernames and passwords
+- other source-level secrets required to call the upstream service
+
+In docs and examples, continue to use placeholders such as `YOUR_API_KEY`. Real credential values should not appear in MDX, checked-in config, or shared examples.
+
+## How HTTP sources fit the pipeline
+
+Once DataHarbor fetches an HTTP response, the rest of the request flow is the same:
+
+1. normalize the payload into the canonical JSON model
+2. match the correct object definition
+3. apply controls and transforms
+4. format the governed result for delivery
+
+See [Data Pipeline](../core/data-pipeline) for the full flow and [Input Normalization](./input-normalization) for the format-specific parsing stage.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Route Matching" icon="route" href="./route-matching">
+    How DataHarbor validates requests against your path template
+  </Card>
+  <Card title="Input Normalization" icon="arrow-down-up" href="./input-normalization">
+    See how HTTP payloads normalize before controls run
+  </Card>
+  <Card title="Enrolling Data Sources" icon="plug" href="../core/enrolling-data-sources">
+    Review the current enrollment workflow
+  </Card>
+</CardGroup>

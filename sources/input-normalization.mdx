@@ -1,0 +1,150 @@
+---
+title: Input Normalization
+description: See how DataHarbor normalizes JSON, CSV, YAML, and Markdown into one canonical data model before controls run.
+---
+
+# Input Normalization
+
+**Different source formats. One controls pipeline.**
+
+Before DataHarbor can apply privacy controls or transforms, it normalizes the upstream payload into a canonical JSON model.
+
+```text
+Upstream payload → Normalize to canonical JSON → Apply controls → Format output → Respond
+```
+
+<Info>
+  Normalization is the stage that makes one `controls` pipeline work across JSON, CSV, YAML, and Markdown. See [Data Pipeline](../core/data-pipeline) for the full request flow.
+</Info>
+
+## Supported input formats
+
+| Format | Content-Type | Normalized shape |
+|--------|--------------|------------------|
+| JSON | `application/json`, `application/*+json` | Parsed directly |
+| CSV | `text/csv` | Array of objects keyed by header columns |
+| YAML | `text/yaml`, `application/yaml`, `application/x-yaml` | JSON-compatible mappings, sequences, and scalars |
+| Markdown | `text/markdown` | Document object with `content` and optional `frontmatter` |
+
+## When to set `input_format`
+
+Most of the time, DataHarbor can infer the source format from the upstream `Content-Type` header.
+
+Set `input_format` only when the upstream service returns a missing, generic, or incorrect content type.
+
+```yaml
+version: "0.3"
+input_format: markdown
+objects:
+  _default:
+    controls:
+      - type: allow
+        fields: [frontmatter.title, content]
+```
+
+## CSV normalization
+
+CSV input is parsed as headered rectangular data. The first row defines the column names, and each later row becomes an object.
+
+```csv
+name,age,active
+Alice,30,true
+Bob,25,false
+```
+
+Normalizes to:
+
+```json
+[
+  { "name": "Alice", "age": 30, "active": true },
+  { "name": "Bob", "age": 25, "active": false }
+]
+```
+
+Type coercion is conservative: obvious booleans, integers, and decimals are converted. Everything else stays a string.
+
+## YAML normalization
+
+YAML input is normalized using the JSON-compatible subset of YAML.
+
+```yaml
+name: Alice
+tags:
+  - admin
+  - owner
+active: true
+```
+
+Normalizes to:
+
+```json
+{
+  "name": "Alice",
+  "tags": ["admin", "owner"],
+  "active": true
+}
+```
+
+<Warning>
+  Advanced YAML constructs that do not map cleanly to JSON — including anchors, aliases, tags, merge keys, multi-document streams, and non-finite floats — are rejected with a descriptive error.
+</Warning>
+
+## Markdown normalization
+
+Markdown input is handled in document mode. DataHarbor preserves the body as `content` and extracts YAML front matter into `frontmatter` when present.
+
+```markdown
+---
+title: API Guide
+tags:
+  - auth
+---
+# API Guide
+
+Authentication details here.
+```
+
+Normalizes to:
+
+```json
+{
+  "frontmatter": {
+    "title": "API Guide",
+    "tags": ["auth"]
+  },
+  "content": "# API Guide\n\nAuthentication details here."
+}
+```
+
+See [Markdown Input](../delivery/markdown) for full front matter rules, limitations, and detection nuances.
+
+## Body sniffing
+
+When the upstream `Content-Type` header is missing or unrecognized and no `input_format` is declared, DataHarbor inspects the response body to infer the format.
+
+- Starts with `{` or `[` → JSON
+- Two rows with matching comma-separated field counts → CSV
+- Starts with `---` or a `key:` mapping → YAML
+- Starts with valid front matter plus non-empty body, or starts with `#` → Markdown
+
+If detection is inconclusive, DataHarbor defaults to JSON.
+
+## Why normalization matters
+
+- Controls always run against normalized JSON, not raw upstream bytes.
+- The same field targeting rules work across source formats.
+- Output formatting happens later, so you can normalize from one format and respond in another.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Data Pipeline" icon="workflow" href="../core/data-pipeline">
+    See where normalization fits in the request flow
+  </Card>
+  <Card title="Output Formatting" icon="file-lines" href="../delivery/output-formatting">
+    Learn how the final governed payload is rendered
+  </Card>
+  <Card title="Markdown Input" icon="file-text" href="../delivery/markdown">
+    Dive into Markdown-specific rules and limitations
+  </Card>
+</CardGroup>

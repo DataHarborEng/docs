@@ -1,0 +1,106 @@
+---
+title: Field Targeting
+description: Target nested fields and arrays consistently across Data Control and Data Transform.
+---
+
+# Field Targeting
+
+Field paths are shared across [Data Control](./data-control) and [Data Transform](./data-transform). Once DataHarbor matches an object definition, it resolves each field path against the normalized payload for that object.
+
+<Info>
+  Object matching happens first. Field targeting happens second. See [Virtual APIs](../core/virtual-apis) and [Data Pipeline](../core/data-pipeline) for the higher-level request flow.
+</Info>
+
+## Quick reference
+
+| Path | Targets |
+|------|---------|
+| `email` | A top-level scalar field |
+| `user.email` | A nested field inside an object |
+| `"[contacts].email"` | The `email` field on every item in the `contacts` array |
+| `"[orders].[items].sku"` | A nested field inside nested arrays |
+
+## Path syntax rules
+
+- Use dot notation for nested objects.
+- Use bracket segments like `"[contacts]"` for arrays.
+- Slash notation like `address/city` is not supported.
+- If the matched payload itself is a root array, the full controls pipeline runs against each object element automatically.
+
+## Nested fields
+
+Use dot notation when the field lives inside one or more nested objects.
+
+```yaml
+controls:
+  - type: redact
+    fields:
+      - user.ssn
+      - billing.card.last4
+      - metadata.created_by
+```
+
+## Arrays
+
+Use bracket segments when the field exists inside every item of an array.
+
+```yaml
+controls:
+  - type: tokenize
+    fields:
+      - "[contacts].email"
+      - "[contacts].phone"
+      - "[orders].[items].sku"
+```
+
+If the response payload itself is a root array, you do not need a leading array segment. DataHarbor applies the control list to each object element automatically.
+
+## `required: true`
+
+Set `required: true` when a missing field should fail the request instead of being skipped.
+
+```yaml
+controls:
+  - type: hash
+    fields: [customer_id]
+    required: true
+```
+
+Required checks are full-path strict:
+
+- If an intermediate parent object is missing, the request fails.
+- If the final field is missing, the request fails.
+- For `coalesce`, all referenced fields being missing or empty also fails when `required: true` is set.
+
+## Scalar versus structured targets
+
+Filter-style data controls such as `redact`, `tokenize`, `anonymize`, `mask`, `hash`, and `allow` target scalar values only.
+
+That means:
+
+- strings, numbers, and booleans are valid targets
+- objects and arrays are not valid targets for filter controls
+
+If you need to reshape objects instead of replacing scalar values, use [Data Transform](./data-transform).
+
+## Transform path rules
+
+Transforms add a few extra path constraints:
+
+- For `combine` and `coalesce`, every source field in `fields` plus the destination `into` path must share the same parent path.
+- `delete` does not use `into`; it removes the paths named in `fields` directly.
+- If `into` already exists, `combine` and `coalesce` fail instead of overwriting the field.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Data Control" icon="shield" href="./data-control">
+    Apply privacy controls to the fields you target
+  </Card>
+  <Card title="Data Transform" icon="shuffle" href="./data-transform">
+    Create, combine, and remove fields in the same pipeline
+  </Card>
+  <Card title="Control Block Reference" icon="code" href="../api-reference/control-block-reference">
+    Review the detailed rules for each control type
+  </Card>
+</CardGroup>
